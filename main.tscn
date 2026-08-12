@@ -1,3 +1,15 @@
 [gd_scene format=3 uid="uid://crtxs2313y4di"]
 
 [node name="main" type="Node3D" unique_id=1133014977]
+
+[node name="Control" type="Control" parent="." unique_id=2133710465]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 454.0
+offset_bottom = 410.0
+
+[node name="label" type="Label" parent="Control" unique_id=2055025690]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 23.0
+text = "POES JOU MA"
