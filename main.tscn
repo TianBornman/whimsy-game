@@ -1,5 +1,7 @@
 [gd_scene format=3 uid="uid://crtxs2313y4di"]
 
+[ext_resource type="Texture2D" uid="uid://37x66myj5jof" path="res://wizza.png" id="1_ig7tw"]
+
 [node name="main" type="Node3D" unique_id=1133014977]
 
 [node name="Control" type="Control" parent="." unique_id=2133710465]
@@ -8,8 +10,14 @@ anchors_preset = 0
 offset_right = 454.0
 offset_bottom = 410.0
 
-[node name="label" type="Label" parent="Control" unique_id=2055025690]
+[node name="Wizza" type="Sprite2D" parent="Control" unique_id=757786160]
+position = Vector2(250, 249)
+texture = ExtResource("1_ig7tw")
+
+[node name="Label" type="Label" parent="Control" unique_id=665689978]
 layout_mode = 0
-offset_right = 40.0
-offset_bottom = 23.0
-text = "POES JOU MA"
+offset_left = 153.0
+offset_top = 514.0
+offset_right = 363.0
+offset_bottom = 537.0
+text = "\"EK LIKE HULLE STOK OUD\""
