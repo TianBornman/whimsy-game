@@ -12,12 +12,14 @@
 [ext_resource type="PackedScene" uid="uid://bygvtgmcuw0oi" path="res://scenes/obstacles/tree_4.tscn" id="10_bjebc"]
 [ext_resource type="PackedScene" uid="uid://dki6m608gegbv" path="res://scenes/obstacles/tree_5.tscn" id="11_3gywq"]
 [ext_resource type="Script" uid="uid://dd0pjr8oxjc3m" path="res://scripts/subtle_wind_pixels.gd" id="12_4k8ly"]
+[ext_resource type="PackedScene" uid="uid://cwed61nbf526l" path="res://scenes/ui.tscn" id="13_sof0w"]
 
 [node name="Level1" type="Node2D" unique_id=1943586023]
 script = ExtResource("1_itquq")
 goblin_scene = ExtResource("2_3hls8")
 goblin_count = 14
 target_count = 2
+shot_cooldown_seconds = 3.0
 panic_duration_seconds = 15.0
 background_texture = ExtResource("3_hn12h")
 obstacle_scenes = Array[PackedScene]([ExtResource("4_rka8t"), ExtResource("5_5hph3"), ExtResource("6_m6f3s"), ExtResource("7_j7kpp"), ExtResource("8_apdrj"), ExtResource("9_5rr72"), ExtResource("10_bjebc"), ExtResource("11_3gywq")])
@@ -36,3 +38,5 @@ y_sort_enabled = true
 [node name="WindPixels" type="Node2D" parent="." unique_id=1041732162]
 z_index = 4095
 script = ExtResource("12_4k8ly")
+
+[node name="UI" parent="." unique_id=977049816 instance=ExtResource("13_sof0w")]

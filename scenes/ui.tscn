@@ -1,0 +1,93 @@
+[gd_scene format=3 uid="uid://cwed61nbf526l"]
+
+[ext_resource type="Script" uid="uid://dnits2ol4pw1" path="res://scripts/ui_manager.gd" id="1_yev5y"]
+[ext_resource type="Texture2D" uid="uid://6nkl4drcxf5y" path="res://sprites/UI/wand_outline.png" id="2_gdt2y"]
+[ext_resource type="Texture2D" uid="uid://oe0ujjqsjryo" path="res://sprites/UI/wand_filler.png" id="3_wm3ai"]
+
+[sub_resource type="Animation" id="Animation_ubhxj"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:rotation")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [0.0]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath(".:value")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [100.0]
+}
+
+[sub_resource type="Animation" id="Animation_ggavl"]
+resource_name = "attack"
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:rotation")
+tracks/0/interp = 2
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.29018676, 0.62304807, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1),
+"update": 0,
+"values": [0.0, 0.17453292, -0.08726646, 0.0]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath(".:value")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 1),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [100.0, 0.0]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_ubhxj"]
+_data = {
+&"RESET": SubResource("Animation_ubhxj"),
+&"attack": SubResource("Animation_ggavl")
+}
+
+[node name="UI" type="CanvasLayer" unique_id=977049816]
+script = ExtResource("1_yev5y")
+
+[node name="anim" type="AnimationPlayer" parent="." unique_id=1218748838]
+root_node = NodePath("../attack_progress")
+libraries/ = SubResource("AnimationLibrary_ubhxj")
+
+[node name="attack_progress" type="TextureProgressBar" parent="." unique_id=1133095207]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -245.0
+offset_top = -95.0
+offset_right = 55.0
+offset_bottom = 405.0
+grow_horizontal = 0
+scale = Vector2(0.5, 0.5)
+pivot_offset = Vector2(144, 250)
+value = 100.0
+fill_mode = 3
+texture_over = ExtResource("2_gdt2y")
+texture_progress = ExtResource("3_wm3ai")
+
+[node name="Timer" type="Timer" parent="." unique_id=1768337803]
+one_shot = true
+
+[connection signal="timeout" from="Timer" to="." method="_on_timer_timeout"]

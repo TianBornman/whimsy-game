@@ -19,7 +19,7 @@ func _on_anim_player_animation_finished(_anim_name: StringName) -> void:
 
 func _on_button_pressed() -> void:
 	switch_scene()
-	print("wtf")
+
 
 
 func switch_scene():

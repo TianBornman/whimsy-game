@@ -57,6 +57,11 @@ const OBSTACLE_CLICK_BLOCKER_AREA_GROUP: String = "obstacle_click_blocker_area"
 @export var randomize_obstacle_flip: bool = true
 
 
+@onready var ui: CanvasLayer = $UI
+
+
+
+
 func _ready() -> void:
 	_apply_background_texture()
 	_configure_depth_sorting()
@@ -70,6 +75,11 @@ func _ready() -> void:
 
 	_spawn_goblins()
 
+
+
+func _input(event: InputEvent) -> void:
+	if event.is_action_pressed("left_click") :
+		ui.fire(shot_cooldown_seconds)
 
 func _apply_background_texture() -> void:
 	if background_texture == null:

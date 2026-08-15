@@ -31,6 +31,14 @@ folder_colors={
 "res://sprites/UI/": "green"
 }
 
+[input]
+
+left_click={
+"deadzone": 0.2,
+"events": [Object(InputEventMouseButton,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"button_mask":1,"position":Vector2(615, 17),"global_position":Vector2(624, 65),"factor":1.0,"button_index":1,"canceled":false,"pressed":true,"double_click":false,"script":null)
+]
+}
+
 [physics]
 
 3d/physics_engine="Jolt Physics"
@@ -40,4 +48,4 @@ folder_colors={
 rendering_device/driver.windows="d3d12"
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
-environment/defaults/default_clear_color=Color(6.738305e-07, 0.33211955, 0.44806176, 1)
+environment/defaults/default_clear_color=Color(0, 0.36514112, 0.20643994, 1)

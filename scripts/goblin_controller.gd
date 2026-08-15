@@ -652,6 +652,7 @@ func _apply_miss_penalty(miss_position: Vector2, killed_wrong_goblin: bool) -> v
 	_click_cooldown_until_msec = now_msec + int(maxf(0.0, shot_cooldown_seconds) * 1000.0)
 
 	if _panic_ends_at_msec > 0 and now_msec >= _panic_ends_at_msec:
+		
 		_fail_level()
 		return
 
@@ -704,6 +705,7 @@ func _are_all_targets_dead() -> bool:
 
 
 func _fail_level() -> void:
+	print("level failed")
 	if _level_resolved:
 		return
 
