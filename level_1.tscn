@@ -16,6 +16,10 @@
 [node name="Level1" type="Node2D" unique_id=1943586023]
 script = ExtResource("1_itquq")
 goblin_scene = ExtResource("2_3hls8")
+goblin_count = 14
+target_count = 2
+panic_duration_seconds = 15.0
+background_texture = ExtResource("3_hn12h")
 obstacle_scenes = Array[PackedScene]([ExtResource("4_rka8t"), ExtResource("5_5hph3"), ExtResource("6_m6f3s"), ExtResource("7_j7kpp"), ExtResource("8_apdrj"), ExtResource("9_5rr72"), ExtResource("10_bjebc"), ExtResource("11_3gywq")])
 
 [node name="BackgroundFloor" type="Sprite2D" parent="." unique_id=2094671606]

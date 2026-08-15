@@ -16,10 +16,7 @@ extends Node2D
 
 ## --- Configuration (tune per-instance or leave as defaults) ---
 
-const CLICK_COOLDOWN_SECONDS: float = 5.0
-const SCATTER_DURATION_SECONDS: float = 10.0
-const SCATTER_SPEED_MULTIPLIER: float = 3.5
-const WRONG_KILL_RUNOFF_PENALTY_SECONDS: float = 2.0
+const SCATTER_SPEED_MULTIPLIER: float = 2.0
 const SCATTER_TARGET_ATTEMPTS: int = 20
 const SCATTER_MIN_TRAVEL_FRACTION: float = 0.18
 const SCATTER_RETARGET_INTERVAL_RANGE: Vector2 = Vector2(0.9, 1.8)
@@ -62,6 +59,12 @@ const OBSTACLE_CLICK_BLOCKER_AREA_GROUP: String = "obstacle_click_blocker_area"
 ## color/face, and a matching portrait is shown under the timers.
 @export var is_target: bool = false
 @export var win_message: String = "YOU WIN!"
+
+## Level timing. The level spawner can override these per level.
+@export_range(0.0, 30.0, 0.1, "suffix:s") var shot_cooldown_seconds: float = 5.0
+@export_range(0.1, 60.0, 0.1, "suffix:s") var panic_duration_seconds: float = 10.0
+@export_range(0.1, 20.0, 0.1, "suffix:s") var win_runoff_seconds: float = 3.0
+@export_range(0.0, 20.0, 0.1, "suffix:s") var wrong_kill_runoff_penalty_seconds: float = 2.0
 
 ## Clicks are detected through this Area2D, not from the Sprite2D texture
 ## rectangle. Resize its CollisionShape2D in the scene to tune the hitbox.
@@ -171,10 +174,7 @@ static var _shooter_timer_label: Label = null
 static var _runoff_timer_label: Label = null
 static var _target_preview_label: Label = null
 static var _target_preview_root: Node2D = null
-static var _target_preview_body: Sprite2D = null
-static var _target_preview_clothing: Sprite2D = null
-static var _target_preview_face: Sprite2D = null
-static var _target_preview_hat: Sprite2D = null
+static var _target_preview_slots: Array = []
 static var _result_layer: CanvasLayer = null
 static var _last_dead_goblin = null
 static var _resolution_choices_pending: bool = false
@@ -196,10 +196,7 @@ func _ready() -> void:
 		_runoff_timer_label = null
 		_target_preview_label = null
 		_target_preview_root = null
-		_target_preview_body = null
-		_target_preview_clothing = null
-		_target_preview_face = null
-		_target_preview_hat = null
+		_target_preview_slots.clear()
 		_result_layer = null
 		_last_dead_goblin = null
 		_resolution_choices_pending = false
@@ -303,17 +300,23 @@ func randomize_body_color() -> void:
 func _set_target_preview() -> void:
 	_ensure_timer_ui()
 
-	if !is_instance_valid(_target_preview_body) or !is_instance_valid(_target_preview_face):
+	if !is_instance_valid(_target_preview_root):
 		return
 
-	var source_body: Sprite2D = _get_body_sprite()
-	_copy_preview_layer(source_body, _target_preview_body)
-	if source_body != null and _target_preview_body.visible:
-		_target_preview_body.scale = _multiply_scale(source_body.scale, scale)
+	var preview_slot: Dictionary = _create_target_preview_slot(_target_preview_slots.size())
+	_target_preview_slots.append(preview_slot)
+	if is_instance_valid(_target_preview_label) and _target_preview_slots.size() > 1:
+		_target_preview_label.text = "Targets:"
 
-	_copy_preview_layer(_get_clothing_sprite(), _target_preview_clothing)
-	_copy_preview_layer(_get_face_sprite(), _target_preview_face)
-	_copy_preview_layer(_get_hat_sprite(), _target_preview_hat)
+	var source_body: Sprite2D = _get_body_sprite()
+	var preview_body: Sprite2D = preview_slot.get("body") as Sprite2D
+	_copy_preview_layer(source_body, preview_body)
+	if source_body != null and preview_body != null and preview_body.visible:
+		preview_body.scale = _multiply_scale(source_body.scale, scale)
+
+	_copy_preview_layer(_get_clothing_sprite(), preview_slot.get("clothing") as Sprite2D)
+	_copy_preview_layer(_get_face_sprite(), preview_slot.get("face") as Sprite2D)
+	_copy_preview_layer(_get_hat_sprite(), preview_slot.get("hat") as Sprite2D)
 
 
 func _copy_preview_layer(source_sprite: Sprite2D, target_sprite: Sprite2D) -> void:
@@ -511,7 +514,11 @@ func _unhandled_input(event: InputEvent) -> void:
 
 	var clicked_goblin = _get_goblin_at_global_point(click_position)
 	if clicked_goblin != null and clicked_goblin.is_target:
-		clicked_goblin._win_level()
+		clicked_goblin._kill_goblin()
+		if _are_all_targets_dead():
+			clicked_goblin._win_level()
+		else:
+			_apply_miss_penalty(click_position, false)
 	elif clicked_goblin != null:
 		clicked_goblin._kill_goblin()
 		_apply_miss_penalty(click_position, true)
@@ -642,17 +649,17 @@ func _is_click_cooldown_active() -> bool:
 
 func _apply_miss_penalty(miss_position: Vector2, killed_wrong_goblin: bool) -> void:
 	var now_msec: int = Time.get_ticks_msec()
-	_click_cooldown_until_msec = now_msec + int(CLICK_COOLDOWN_SECONDS * 1000.0)
+	_click_cooldown_until_msec = now_msec + int(maxf(0.0, shot_cooldown_seconds) * 1000.0)
 
 	if _panic_ends_at_msec > 0 and now_msec >= _panic_ends_at_msec:
 		_fail_level()
 		return
 
 	if _panic_ends_at_msec <= 0:
-		_panic_ends_at_msec = now_msec + int(SCATTER_DURATION_SECONDS * 1000.0)
+		_panic_ends_at_msec = now_msec + int(maxf(0.1, panic_duration_seconds) * 1000.0)
 
 	if killed_wrong_goblin:
-		_panic_ends_at_msec -= int(WRONG_KILL_RUNOFF_PENALTY_SECONDS * 1000.0)
+		_panic_ends_at_msec -= int(maxf(0.0, wrong_kill_runoff_penalty_seconds) * 1000.0)
 		if _panic_ends_at_msec <= now_msec:
 			_fail_level()
 			return
@@ -674,10 +681,26 @@ func _win_level() -> void:
 	_level_resolved = true
 	_click_cooldown_until_msec = 0
 	_kill_goblin()
-	_ensure_scatter_runoff(global_position)
+	_ensure_scatter_runoff(global_position, win_runoff_seconds)
 	_update_timer_ui()
 	_show_result_message(win_message)
 	_queue_resolution_choices_after_scatter()
+
+
+func _are_all_targets_dead() -> bool:
+	var found_target: bool = false
+	for goblin in _active_goblins:
+		if !is_instance_valid(goblin) or goblin._is_resolution_choice():
+			continue
+
+		if !goblin.is_target:
+			continue
+
+		found_target = true
+		if !goblin._is_dead:
+			return false
+
+	return found_target
 
 
 func _fail_level() -> void:
@@ -705,10 +728,11 @@ func _send_living_goblins_offscreen() -> void:
 	_try_spawn_resolution_choices_after_scatter()
 
 
-func _ensure_scatter_runoff(scatter_origin: Vector2) -> void:
+func _ensure_scatter_runoff(scatter_origin: Vector2, scatter_duration: float = -1.0) -> void:
 	var now_msec: int = Time.get_ticks_msec()
-	if _panic_ends_at_msec <= now_msec:
-		_panic_ends_at_msec = now_msec + int(SCATTER_DURATION_SECONDS * 1000.0)
+	var effective_scatter_duration: float = panic_duration_seconds if scatter_duration < 0.0 else scatter_duration
+	if _level_resolved or _panic_ends_at_msec <= now_msec:
+		_panic_ends_at_msec = now_msec + int(maxf(0.1, effective_scatter_duration) * 1000.0)
 
 	var scatter_seconds_remaining: float = maxf(0.1, float(_panic_ends_at_msec - now_msec) / 1000.0)
 	for goblin in _active_goblins:
@@ -1155,22 +1179,44 @@ func _ensure_timer_ui() -> void:
 	_target_preview_root.position = Vector2(70.0, 155.0)
 	_timer_layer.add_child(_target_preview_root)
 
-	_target_preview_body = Sprite2D.new()
-	_target_preview_body.name = "Body"
-	_target_preview_body.scale = scale
-	_target_preview_root.add_child(_target_preview_body)
 
-	_target_preview_clothing = Sprite2D.new()
-	_target_preview_clothing.name = "Clothing"
-	_target_preview_body.add_child(_target_preview_clothing)
+func _create_target_preview_slot(slot_index: int) -> Dictionary:
+	var slot_root: Node2D = Node2D.new()
+	slot_root.name = "TargetPreview%d" % [slot_index + 1]
+	slot_root.position = _get_target_preview_slot_position(slot_index)
+	_target_preview_root.add_child(slot_root)
 
-	_target_preview_face = Sprite2D.new()
-	_target_preview_face.name = "Face"
-	_target_preview_body.add_child(_target_preview_face)
+	var body: Sprite2D = Sprite2D.new()
+	body.name = "Body"
+	slot_root.add_child(body)
 
-	_target_preview_hat = Sprite2D.new()
-	_target_preview_hat.name = "Hat"
-	_target_preview_body.add_child(_target_preview_hat)
+	var clothing: Sprite2D = Sprite2D.new()
+	clothing.name = "Clothing"
+	body.add_child(clothing)
+
+	var face: Sprite2D = Sprite2D.new()
+	face.name = "Face"
+	body.add_child(face)
+
+	var hat: Sprite2D = Sprite2D.new()
+	hat.name = "Hat"
+	body.add_child(hat)
+
+	return {
+		"root": slot_root,
+		"body": body,
+		"clothing": clothing,
+		"face": face,
+		"hat": hat
+	}
+
+
+func _get_target_preview_slot_position(slot_index: int) -> Vector2:
+	const TARGET_PREVIEW_COLUMNS: int = 4
+	const TARGET_PREVIEW_SPACING: Vector2 = Vector2(54.0, 72.0)
+	var column: int = slot_index % TARGET_PREVIEW_COLUMNS
+	var row: int = floori(float(slot_index) / float(TARGET_PREVIEW_COLUMNS))
+	return Vector2(column * TARGET_PREVIEW_SPACING.x, row * TARGET_PREVIEW_SPACING.y)
 
 
 func _update_walk_squash(delta: float, movement_speed: float) -> void:

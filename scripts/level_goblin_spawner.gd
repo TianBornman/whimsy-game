@@ -11,9 +11,10 @@ const OBSTACLE_CLICK_BLOCKER_AREA_GROUP: String = "obstacle_click_blocker_area"
 @export_category("Goblins")
 @export var goblin_scene: PackedScene
 @export var goblin_count: int = 10
+@export_range(1, 128, 1) var target_count: int = 1
 
-## -1 means pick a random target. Set this to 0, 1, 2, etc. if you want a
-## specific spawned goblin to be the target for testing.
+## -1 means pick random targets. Set this to 0, 1, 2, etc. if you want a
+## specific spawned goblin included as a target for testing.
 @export var target_index: int = -1
 
 ## Keeps spawns away from the exact screen edge. The goblin controller still
@@ -21,6 +22,12 @@ const OBSTACLE_CLICK_BLOCKER_AREA_GROUP: String = "obstacle_click_blocker_area"
 @export var spawn_padding: float = 48.0
 
 @export var goblin_name_prefix: String = "Goblin"
+
+@export_category("Level Timing")
+@export_range(0.0, 30.0, 0.1, "suffix:s") var shot_cooldown_seconds: float = 5.0
+@export_range(0.1, 60.0, 0.1, "suffix:s") var panic_duration_seconds: float = 10.0
+@export_range(0.1, 20.0, 0.1, "suffix:s") var win_runoff_seconds: float = 3.0
+@export_range(0.0, 20.0, 0.1, "suffix:s") var wrong_kill_runoff_penalty_seconds: float = 2.0
 
 ## Shared body palette for all spawned goblins. Each goblin randomly picks one
 ## stepped blend between these two colors, so several goblins can share the
@@ -30,11 +37,14 @@ const OBSTACLE_CLICK_BLOCKER_AREA_GROUP: String = "obstacle_click_blocker_area"
 @export var goblin_body_color_b: Color = Color(0.14, 0.55, 0.24, 1.0)
 @export_range(2, 12, 1) var goblin_body_color_steps: int = 3
 
+@export_category("Background")
+@export var background_texture: Texture2D
+@export var background_sprite_path: NodePath = NodePath("BackgroundFloor")
+
 @export_category("Background Obstacles")
 @export var spawn_background_obstacles: bool = true
 @export var depth_sort_goblins_with_obstacles: bool = true
 @export var bg_object_parent_path: NodePath = NodePath("bg_object_parent")
-@export var background_sprite_path: NodePath = NodePath("BackgroundFloor")
 @export var obstacle_scenes: Array[PackedScene] = []
 @export_dir var obstacle_scene_directory: String = "res://scenes/obstacles"
 
@@ -48,6 +58,7 @@ const OBSTACLE_CLICK_BLOCKER_AREA_GROUP: String = "obstacle_click_blocker_area"
 
 
 func _ready() -> void:
+	_apply_background_texture()
 	_configure_depth_sorting()
 
 	if spawn_background_obstacles:
@@ -58,6 +69,18 @@ func _ready() -> void:
 		return
 
 	_spawn_goblins()
+
+
+func _apply_background_texture() -> void:
+	if background_texture == null:
+		return
+
+	var background_sprite: Sprite2D = get_node_or_null(background_sprite_path) as Sprite2D
+	if background_sprite == null:
+		push_warning("Background texture was assigned, but no BackgroundFloor Sprite2D was found.")
+		return
+
+	background_sprite.texture = background_texture
 
 
 func _configure_depth_sorting() -> void:
@@ -298,13 +321,14 @@ func _is_obstacle_position_spaced(candidate: Vector2, placed_positions: Array[Ve
 
 func _spawn_goblins() -> void:
 	var count: int = maxi(1, goblin_count)
-	var chosen_target_index: int = _get_target_index(count)
+	var chosen_target_indices: Array[int] = _get_target_indices(count)
 	var goblin_parent: Node = _get_goblin_parent()
 
 	for i in range(count):
 		var goblin: Node = goblin_scene.instantiate()
 		goblin.name = "%s%d" % [goblin_name_prefix, i + 1]
-		goblin.set("is_target", i == chosen_target_index)
+		goblin.set("is_target", chosen_target_indices.has(i))
+		_configure_goblin_level_timing(goblin)
 		_configure_goblin_body_palette(goblin)
 
 		goblin_parent.add_child(goblin)
@@ -316,6 +340,13 @@ func _spawn_goblins() -> void:
 				goblin.call("_update_depth_z_index")
 
 
+func _configure_goblin_level_timing(goblin: Node) -> void:
+	goblin.set("shot_cooldown_seconds", shot_cooldown_seconds)
+	goblin.set("panic_duration_seconds", panic_duration_seconds)
+	goblin.set("win_runoff_seconds", win_runoff_seconds)
+	goblin.set("wrong_kill_runoff_penalty_seconds", wrong_kill_runoff_penalty_seconds)
+
+
 func _configure_goblin_body_palette(goblin: Node) -> void:
 	goblin.set("randomize_body_color_on_ready", randomize_goblin_body_colors)
 	goblin.set("body_color_a", goblin_body_color_a)
@@ -323,11 +354,24 @@ func _configure_goblin_body_palette(goblin: Node) -> void:
 	goblin.set("body_color_steps", goblin_body_color_steps)
 
 
-func _get_target_index(count: int) -> int:
-	if target_index >= 0 and target_index < count:
-		return target_index
+func _get_target_indices(count: int) -> Array[int]:
+	var chosen_indices: Array[int] = []
+	var desired_count: int = clampi(target_count, 1, count)
 
-	return randi_range(0, count - 1)
+	if target_index >= 0 and target_index < count:
+		chosen_indices.append(target_index)
+
+	var available_indices: Array[int] = []
+	for i in range(count):
+		if !chosen_indices.has(i):
+			available_indices.append(i)
+
+	while chosen_indices.size() < desired_count and !available_indices.is_empty():
+		var pick_index: int = randi_range(0, available_indices.size() - 1)
+		chosen_indices.append(available_indices[pick_index])
+		available_indices.remove_at(pick_index)
+
+	return chosen_indices
 
 
 func _get_random_spawn_position() -> Vector2:
