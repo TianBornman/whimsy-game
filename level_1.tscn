@@ -11,6 +11,7 @@
 [ext_resource type="PackedScene" path="res://scenes/obstacles/tree_3.tscn" id="9_5rr72"]
 [ext_resource type="PackedScene" path="res://scenes/obstacles/tree_4.tscn" id="10_bjebc"]
 [ext_resource type="PackedScene" path="res://scenes/obstacles/tree_5.tscn" id="11_3gywq"]
+[ext_resource type="Script" path="res://scripts/subtle_wind_pixels.gd" id="12_4k8ly"]
 
 [node name="Level1" type="Node2D" unique_id=1943586023]
 script = ExtResource("1_itquq")
@@ -27,3 +28,7 @@ position = Vector2(586, 335)
 
 [node name="bg_object_parent" type="Node2D" parent="." unique_id=1161363108]
 y_sort_enabled = true
+
+[node name="WindPixels" type="Node2D" parent="." unique_id=1041732162]
+z_index = 4095
+script = ExtResource("12_4k8ly")
