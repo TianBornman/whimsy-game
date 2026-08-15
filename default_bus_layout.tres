@@ -1,0 +1,9 @@
+[gd_resource type="AudioBusLayout" format=3 uid="uid://csmmps45wqb44"]
+
+[resource]
+bus/1/name = &"AttackClick"
+bus/1/solo = false
+bus/1/mute = false
+bus/1/bypass_fx = false
+bus/1/volume_db = -17.021105
+bus/1/send = &"Master"
