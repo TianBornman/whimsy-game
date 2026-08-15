@@ -26,6 +26,12 @@ const SCATTER_MIN_TRAVEL_FRACTION: float = 0.18
 const SCATTER_RETARGET_INTERVAL_RANGE: Vector2 = Vector2(0.9, 1.8)
 const FLEE_OFFSCREEN_SPEED_MULTIPLIER: float = 4.0
 const FLEE_OFFSCREEN_PADDING: float = 250.0
+const RESOLUTION_CHOICE_COLOR_RESTART: Color = Color(0.0, 1.0, 0.0, 1.0)
+const RESOLUTION_CHOICE_COLOR_QUIT: Color = Color(1.0, 0.0, 0.0, 1.0)
+const RESOLUTION_CHOICE_SPACING: float = 120.0
+const RESOLUTION_CHOICE_OFFSCREEN_PADDING: float = 220.0
+const RESOLUTION_CHOICE_WALK_SPEED: float = 320.0
+const DEFAULT_GOBLIN_SCENE_PATH: String = "res://goblin.tscn"
 
 ## Movement bounds are shared by every goblin and come from the visible
 ## screen. The script keeps the whole sprite inside, not just its center
@@ -61,6 +67,13 @@ const FLEE_OFFSCREEN_PADDING: float = 250.0
 ## Optional face shown after this goblin is shot/killed.
 @export var dead_face_texture: Texture2D
 
+## Optional hat randomization. Fill hat_textures with every hat image this
+## goblin can use. Add a blank/transparent texture here if "no hat" should
+## be one of the random results.
+@export var randomize_hat_on_ready: bool = true
+@export var hat_sprite_path: NodePath = NodePath("Hat")
+@export var hat_textures: Array[Texture2D] = []
+
 ## Body-only hue randomization. This uses self_modulate so child face sprites
 ## keep their own colors.
 @export var randomize_body_hue_on_ready: bool = true
@@ -79,7 +92,8 @@ const FLEE_OFFSCREEN_PADDING: float = 250.0
 
 ## --- Internal state ---
 
-enum State { IDLE, WALK, SCATTER, FLEE_OFFSCREEN, DEAD }
+enum State { IDLE, WALK, SCATTER, FLEE_OFFSCREEN, DEAD, RESOLUTION_WALK_IN, RESOLUTION_STAND }
+enum ResolutionChoice { NONE, RESTART, QUIT }
 
 var _state: State = State.IDLE
 var _state_timer: float = 0.0
@@ -87,8 +101,10 @@ var _target_pos: Vector2
 var _scatter_retarget_timer: float = 0.0
 var _speed: float = 30.0
 var _is_dead: bool = false
+var _resolution_choice: int = ResolutionChoice.NONE
 var _base_scale: Vector2 = Vector2.ONE
 var _squash_phase: float = 0.0
+var _facing_sign: float = 1.0
 
 static var _active_goblins: Array = []
 static var _click_cooldown_until_msec: int = 0
@@ -104,11 +120,17 @@ static var _target_preview_label: Label = null
 static var _target_preview_root: Node2D = null
 static var _target_preview_body: Sprite2D = null
 static var _target_preview_face: Sprite2D = null
+static var _target_preview_hat: Sprite2D = null
 static var _result_layer: CanvasLayer = null
+static var _last_dead_goblin: Sprite2D = null
+static var _resolution_choices_pending: bool = false
+static var _resolution_choices_spawned: bool = false
 
 
 func _ready() -> void:
-	_base_scale = scale
+	_facing_sign = -1.0 if scale.x < 0.0 else 1.0
+	_base_scale = Vector2(absf(scale.x), scale.y)
+	flip_h = false
 
 	if _active_goblins.is_empty():
 		_click_cooldown_until_msec = 0
@@ -123,13 +145,20 @@ func _ready() -> void:
 		_target_preview_root = null
 		_target_preview_body = null
 		_target_preview_face = null
+		_target_preview_hat = null
 		_result_layer = null
+		_last_dead_goblin = null
+		_resolution_choices_pending = false
+		_resolution_choices_spawned = false
 
 	if !_active_goblins.has(self):
 		_active_goblins.append(self)
 
 	if randomize_face_on_ready:
 		randomize_face()
+
+	if randomize_hat_on_ready:
+		randomize_hat()
 
 	if randomize_body_hue_on_ready:
 		randomize_body_hue()
@@ -165,6 +194,22 @@ func randomize_face() -> void:
 		return
 
 	face_sprite.texture = face_textures[randi_range(0, face_textures.size() - 1)]
+
+
+func randomize_hat() -> void:
+	var hat_sprite: Sprite2D = _get_hat_sprite()
+	if hat_sprite == null:
+		if !hat_textures.is_empty():
+			push_warning("Goblin hat randomization skipped: no Hat Sprite2D was found.")
+		return
+
+	if hat_textures.is_empty():
+		hat_sprite.texture = null
+		hat_sprite.visible = false
+		return
+
+	hat_sprite.visible = true
+	hat_sprite.texture = hat_textures[randi_range(0, hat_textures.size() - 1)]
 
 
 func randomize_body_hue() -> void:
@@ -206,6 +251,22 @@ func _set_target_preview() -> void:
 	_target_preview_face.self_modulate = source_face.self_modulate
 	_target_preview_face.modulate = source_face.modulate
 
+	if is_instance_valid(_target_preview_hat):
+		var source_hat: Sprite2D = _get_hat_sprite()
+		if source_hat == null or !source_hat.visible or source_hat.texture == null:
+			_target_preview_hat.visible = false
+		else:
+			_target_preview_hat.visible = true
+			_target_preview_hat.texture = source_hat.texture
+			_target_preview_hat.position = source_hat.position
+			_target_preview_hat.rotation = source_hat.rotation
+			_target_preview_hat.scale = source_hat.scale
+			_target_preview_hat.centered = source_hat.centered
+			_target_preview_hat.offset = source_hat.offset
+			_target_preview_hat.flip_h = false
+			_target_preview_hat.self_modulate = source_hat.self_modulate
+			_target_preview_hat.modulate = source_hat.modulate
+
 
 func _get_face_sprite() -> Sprite2D:
 	if String(face_sprite_path) != "":
@@ -218,6 +279,15 @@ func _get_face_sprite() -> Sprite2D:
 		return named_face
 
 	return _find_first_descendant_sprite(self)
+
+
+func _get_hat_sprite() -> Sprite2D:
+	if String(hat_sprite_path) != "":
+		var path_sprite: Sprite2D = get_node_or_null(hat_sprite_path) as Sprite2D
+		if path_sprite != null:
+			return path_sprite
+
+	return _find_descendant_sprite_named(self, "hat")
 
 
 func _find_descendant_sprite_named(parent_node: Node, name_part: String) -> Sprite2D:
@@ -272,8 +342,7 @@ func _process(delta: float) -> void:
 				var step: float = minf(_speed * delta, dist)
 				current_pos += dir * step
 
-				if flip_with_direction and absf(dir.x) > 0.01:
-					flip_h = dir.x < 0.0
+				_set_facing_from_direction(dir)
 
 				_set_clamped_position(current_pos)
 
@@ -289,6 +358,12 @@ func _process(delta: float) -> void:
 		State.DEAD:
 			pass
 
+		State.RESOLUTION_WALK_IN:
+			_resolution_choice_walk_in_step(delta)
+
+		State.RESOLUTION_STAND:
+			pass
+
 	var movement_speed: float = 0.0
 	if delta > 0.0:
 		movement_speed = global_position.distance_to(frame_start_position) / delta
@@ -296,7 +371,7 @@ func _process(delta: float) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if self != _get_input_dispatcher() or _level_resolved:
+	if self != _get_input_dispatcher():
 		return
 
 	var mouse_event: InputEventMouseButton = event as InputEventMouseButton
@@ -308,14 +383,19 @@ func _unhandled_input(event: InputEvent) -> void:
 
 	var current_frame: int = Engine.get_process_frames()
 	if _last_click_handled_frame == current_frame:
-		get_viewport().set_input_as_handled()
+		_mark_input_handled()
 		return
 
 	_last_click_handled_frame = current_frame
 
 	var click_position: Vector2 = get_global_mouse_position()
+	if _level_resolved:
+		_mark_input_handled()
+		_handle_resolution_choice_click(click_position)
+		return
+
 	if _is_click_cooldown_active():
-		get_viewport().set_input_as_handled()
+		_mark_input_handled()
 		return
 
 	var clicked_goblin: Sprite2D = _get_goblin_at_global_point(click_position)
@@ -327,12 +407,12 @@ func _unhandled_input(event: InputEvent) -> void:
 	else:
 		_apply_miss_penalty(click_position, false)
 
-	get_viewport().set_input_as_handled()
+	_mark_input_handled()
 
 
 func _get_input_dispatcher() -> Sprite2D:
 	for goblin in _active_goblins:
-		if is_instance_valid(goblin) and goblin.is_inside_tree():
+		if is_instance_valid(goblin) and goblin.is_inside_tree() and goblin.is_visible_in_tree():
 			return goblin
 
 	return null
@@ -383,7 +463,7 @@ func _apply_miss_penalty(miss_position: Vector2, killed_wrong_goblin: bool) -> v
 	_update_timer_ui()
 
 	for goblin in _active_goblins:
-		if !is_instance_valid(goblin) or goblin._is_dead:
+		if !is_instance_valid(goblin) or goblin._is_dead or goblin._is_resolution_choice():
 			continue
 
 		goblin._start_scatter(miss_position, scatter_seconds_remaining)
@@ -399,6 +479,7 @@ func _win_level() -> void:
 	_ensure_scatter_runoff(global_position)
 	_update_timer_ui()
 	_show_result_message(win_message)
+	_queue_resolution_choices_after_scatter()
 
 
 func _fail_level() -> void:
@@ -409,6 +490,7 @@ func _fail_level() -> void:
 	_click_cooldown_until_msec = 0
 	_update_timer_ui()
 	_show_result_message("YOU FAILED")
+	_queue_resolution_choices_after_scatter()
 	_send_living_goblins_offscreen()
 
 
@@ -417,10 +499,12 @@ func _send_living_goblins_offscreen() -> void:
 	_click_cooldown_until_msec = 0
 	_update_timer_ui()
 	for goblin in _active_goblins:
-		if !is_instance_valid(goblin) or goblin._is_dead:
+		if !is_instance_valid(goblin) or goblin._is_dead or goblin._is_resolution_choice():
 			continue
 
 		goblin._start_flee_offscreen()
+
+	_try_spawn_resolution_choices_after_scatter()
 
 
 func _ensure_scatter_runoff(scatter_origin: Vector2) -> void:
@@ -430,14 +514,18 @@ func _ensure_scatter_runoff(scatter_origin: Vector2) -> void:
 
 	var scatter_seconds_remaining: float = maxf(0.1, float(_panic_ends_at_msec - now_msec) / 1000.0)
 	for goblin in _active_goblins:
-		if !is_instance_valid(goblin) or goblin._is_dead:
+		if !is_instance_valid(goblin) or goblin._is_dead or goblin._is_resolution_choice():
 			continue
 
 		goblin._start_scatter(scatter_origin, scatter_seconds_remaining)
 
 
 func _kill_goblin() -> void:
+	if _is_resolution_choice():
+		return
+
 	_is_dead = true
+	_last_dead_goblin = self
 	_state = State.DEAD
 	_state_timer = 0.0
 	_scatter_retarget_timer = 0.0
@@ -456,6 +544,193 @@ func _apply_dead_face() -> void:
 		return
 
 	face_sprite.texture = dead_face_texture
+
+
+func _queue_resolution_choices_after_scatter() -> void:
+	if _resolution_choices_spawned:
+		return
+
+	_resolution_choices_pending = true
+	_try_spawn_resolution_choices_after_scatter()
+
+
+func _try_spawn_resolution_choices_after_scatter() -> void:
+	if !_resolution_choices_pending or _resolution_choices_spawned:
+		return
+
+	if !_are_normal_goblins_done_scattering():
+		return
+
+	_resolution_choices_pending = false
+	_spawn_resolution_choices()
+
+
+func _are_normal_goblins_done_scattering() -> bool:
+	for goblin in _active_goblins:
+		if !is_instance_valid(goblin):
+			continue
+
+		if goblin._is_resolution_choice() or goblin._is_dead:
+			continue
+
+		if goblin.is_visible_in_tree():
+			return false
+
+	return true
+
+
+func _spawn_resolution_choices() -> void:
+	if _resolution_choices_spawned:
+		return
+
+	_resolution_choices_spawned = true
+
+	var choice_scene: PackedScene = _get_goblin_scene()
+	if choice_scene == null:
+		push_warning("Could not spawn restart/quit choices: goblin scene was not found.")
+		return
+
+	var anchor_position: Vector2 = _get_resolution_choice_anchor_position()
+	var green_target_position: Vector2 = _clamp_point_to_effective_bounds(
+		anchor_position + Vector2(-RESOLUTION_CHOICE_SPACING, 0.0)
+	)
+	var red_target_position: Vector2 = _clamp_point_to_effective_bounds(
+		anchor_position + Vector2(RESOLUTION_CHOICE_SPACING, 0.0)
+	)
+	var screen_bounds: Rect2 = _get_screen_bounds()
+	var green_start_position: Vector2 = Vector2(
+		screen_bounds.position.x - RESOLUTION_CHOICE_OFFSCREEN_PADDING,
+		green_target_position.y
+	)
+	var red_start_position: Vector2 = Vector2(
+		screen_bounds.position.x + screen_bounds.size.x + RESOLUTION_CHOICE_OFFSCREEN_PADDING,
+		red_target_position.y
+	)
+
+	_spawn_resolution_choice(
+		choice_scene,
+		ResolutionChoice.RESTART,
+		RESOLUTION_CHOICE_COLOR_RESTART,
+		green_start_position,
+		green_target_position
+	)
+	_spawn_resolution_choice(
+		choice_scene,
+		ResolutionChoice.QUIT,
+		RESOLUTION_CHOICE_COLOR_QUIT,
+		red_start_position,
+		red_target_position
+	)
+
+
+func _get_goblin_scene() -> PackedScene:
+	var scene_path: String = scene_file_path
+	if scene_path.is_empty():
+		scene_path = DEFAULT_GOBLIN_SCENE_PATH
+
+	return load(scene_path) as PackedScene
+
+
+func _spawn_resolution_choice(
+	choice_scene: PackedScene,
+	choice_type: int,
+	choice_color: Color,
+	start_position: Vector2,
+	stand_position: Vector2
+) -> void:
+	var choice_node: Node = choice_scene.instantiate()
+	var choice_goblin: Sprite2D = choice_node as Sprite2D
+	if choice_goblin == null:
+		choice_node.queue_free()
+		return
+
+	choice_goblin.name = "RestartChoice" if choice_type == ResolutionChoice.RESTART else "QuitChoice"
+
+	var parent_node: Node = get_tree().current_scene
+	if parent_node == null:
+		parent_node = get_parent()
+	if parent_node == null:
+		parent_node = get_tree().root
+
+	parent_node.add_child(choice_goblin)
+	choice_goblin._setup_resolution_choice(choice_type, choice_color, start_position, stand_position)
+
+
+func _setup_resolution_choice(
+	choice_type: int,
+	choice_color: Color,
+	start_position: Vector2,
+	stand_position: Vector2
+) -> void:
+	is_target = false
+	_resolution_choice = choice_type
+	_is_dead = false
+	_speed = maxf(_speed, RESOLUTION_CHOICE_WALK_SPEED)
+	global_position = start_position
+	_target_pos = stand_position
+	_state = State.RESOLUTION_WALK_IN
+	_state_timer = 0.0
+	_scatter_retarget_timer = 0.0
+	self_modulate = Color.WHITE
+	modulate = choice_color
+	_reset_walk_squash()
+
+
+func _get_resolution_choice_anchor_position() -> Vector2:
+	if is_instance_valid(_last_dead_goblin) and _last_dead_goblin.is_inside_tree():
+		return _last_dead_goblin.global_position
+
+	for goblin in _active_goblins:
+		if (
+			is_instance_valid(goblin)
+			and goblin.is_inside_tree()
+			and goblin.is_visible_in_tree()
+			and goblin.is_target
+		):
+			return goblin.global_position
+
+	var screen_bounds: Rect2 = _get_screen_bounds()
+	return screen_bounds.position + screen_bounds.size * 0.5
+
+
+func _handle_resolution_choice_click(click_position: Vector2) -> void:
+	var clicked_goblin: Sprite2D = _get_goblin_at_global_point(click_position)
+	if clicked_goblin == null or !clicked_goblin._is_resolution_choice():
+		return
+
+	match clicked_goblin._resolution_choice:
+		ResolutionChoice.RESTART:
+			get_tree().reload_current_scene()
+
+		ResolutionChoice.QUIT:
+			get_tree().quit()
+
+
+func _is_resolution_choice() -> bool:
+	return _resolution_choice != ResolutionChoice.NONE
+
+
+func _mark_input_handled() -> void:
+	var viewport: Viewport = get_viewport()
+	if viewport != null:
+		viewport.set_input_as_handled()
+
+
+func _resolution_choice_walk_in_step(delta: float) -> void:
+	var current_pos: Vector2 = global_position
+	var to_target: Vector2 = _target_pos - current_pos
+	var dist: float = to_target.length()
+
+	if dist <= arrival_threshold:
+		global_position = _target_pos
+		_state = State.RESOLUTION_STAND
+		_state_timer = 0.0
+		return
+
+	var dir: Vector2 = to_target / dist
+	var step: float = minf(_speed * delta, dist)
+	global_position = current_pos + dir * step
+	_set_facing_from_direction(dir)
 
 
 func _show_result_message(message: String) -> void:
@@ -529,7 +804,7 @@ func _ensure_timer_ui() -> void:
 	var parent_node: Node = get_tree().current_scene
 	if parent_node == null:
 		parent_node = get_tree().root
-	parent_node.add_child(_timer_layer)
+	parent_node.call_deferred("add_child", _timer_layer)
 
 	_shooter_timer_label = _create_timer_label("ShooterTimerLabel", Vector2(16.0, 16.0))
 	_runoff_timer_label = _create_timer_label("RunoffTimerLabel", Vector2(16.0, 48.0))
@@ -553,6 +828,10 @@ func _ensure_timer_ui() -> void:
 	_target_preview_face = Sprite2D.new()
 	_target_preview_face.name = "Face"
 	_target_preview_body.add_child(_target_preview_face)
+
+	_target_preview_hat = Sprite2D.new()
+	_target_preview_hat.name = "Hat"
+	_target_preview_body.add_child(_target_preview_hat)
 
 
 func _update_walk_squash(delta: float, movement_speed: float) -> void:
@@ -578,7 +857,7 @@ func _update_walk_squash(delta: float, movement_speed: float) -> void:
 	var squash_amount: float = maxf(0.0, walk_squash_amount) * speed_factor
 	var pulse: float = sin(_squash_phase)
 	var target_scale: Vector2 = Vector2(
-		_base_scale.x * (1.0 + pulse * squash_amount),
+		_base_scale.x * _facing_sign * (1.0 + pulse * squash_amount),
 		_base_scale.y * (1.0 - pulse * squash_amount)
 	)
 	var blend: float = clampf(walk_squash_lerp_speed * delta, 0.0, 1.0)
@@ -587,12 +866,30 @@ func _update_walk_squash(delta: float, movement_speed: float) -> void:
 
 func _return_squash_to_base(delta: float) -> void:
 	var blend: float = clampf(walk_squash_return_speed * delta, 0.0, 1.0)
-	scale = scale.lerp(_base_scale, blend)
+	scale = scale.lerp(_get_facing_base_scale(), blend)
 
 
 func _reset_walk_squash() -> void:
 	_squash_phase = 0.0
-	scale = _base_scale
+	scale = _get_facing_base_scale()
+
+
+func _set_facing_from_direction(dir: Vector2) -> void:
+	# Sprite2D.flip_h only flips this node's texture, not child sprites.
+	# Use the node scale instead so the body, face, and hat stay locked
+	# together when the goblin turns sideways.
+	flip_h = false
+	if !flip_with_direction or absf(dir.x) <= 0.01:
+		return
+
+	var new_facing_sign: float = -1.0 if dir.x > 0.0 else 1.0
+	if !is_equal_approx(new_facing_sign, _facing_sign):
+		_facing_sign = new_facing_sign
+		scale.x = absf(scale.x) * _facing_sign
+
+
+func _get_facing_base_scale() -> Vector2:
+	return Vector2(_base_scale.x * _facing_sign, _base_scale.y)
 
 
 func _create_timer_label(label_name: String, label_position: Vector2) -> Label:
@@ -637,6 +934,15 @@ func _get_effective_bounds() -> Rect2:
 		effective_max.y = center_y
 
 	return Rect2(effective_min, effective_max - effective_min)
+
+
+func _clamp_point_to_effective_bounds(point: Vector2) -> Vector2:
+	var effective_bounds: Rect2 = _get_effective_bounds()
+	var effective_max: Vector2 = effective_bounds.position + effective_bounds.size
+	return Vector2(
+		clampf(point.x, effective_bounds.position.x, effective_max.x),
+		clampf(point.y, effective_bounds.position.y, effective_max.y)
+	)
 
 
 func _get_screen_bounds() -> Rect2:
@@ -722,8 +1028,7 @@ func _scatter_step(delta: float) -> void:
 	var step: float = minf(_speed * SCATTER_SPEED_MULTIPLIER * delta, dist)
 	current_pos += dir * step
 
-	if flip_with_direction and absf(dir.x) > 0.01:
-		flip_h = dir.x < 0.0
+	_set_facing_from_direction(dir)
 
 	_set_clamped_position(current_pos)
 
@@ -752,14 +1057,14 @@ func _flee_offscreen_step(delta: float) -> void:
 	if dist <= arrival_threshold:
 		visible = false
 		set_process(false)
+		_try_spawn_resolution_choices_after_scatter()
 		return
 
 	var dir: Vector2 = to_target / dist
 	var step: float = minf(_speed * FLEE_OFFSCREEN_SPEED_MULTIPLIER * delta, dist)
 	global_position = current_pos + dir * step
 
-	if flip_with_direction and absf(dir.x) > 0.01:
-		flip_h = dir.x < 0.0
+	_set_facing_from_direction(dir)
 
 
 func _get_offscreen_flee_target() -> Vector2:
