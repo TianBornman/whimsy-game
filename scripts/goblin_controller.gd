@@ -67,6 +67,16 @@ const FLEE_OFFSCREEN_PADDING: float = 250.0
 @export var body_hue_saturation: float = 0.65
 @export var body_hue_value: float = 1.0
 
+## Cute squash/stretch while moving. It is driven by actual pixels moved this
+## frame, so faster panic/flee movement bounces harder and quicker.
+@export var walk_squash_enabled: bool = true
+@export var walk_squash_amount: float = 0.08
+@export var walk_squash_frequency: float = 5.0
+@export var walk_squash_reference_speed: float = 220.0
+@export var walk_squash_max_speed_factor: float = 2.0
+@export var walk_squash_lerp_speed: float = 18.0
+@export var walk_squash_return_speed: float = 10.0
+
 ## --- Internal state ---
 
 enum State { IDLE, WALK, SCATTER, FLEE_OFFSCREEN, DEAD }
@@ -77,6 +87,8 @@ var _target_pos: Vector2
 var _scatter_retarget_timer: float = 0.0
 var _speed: float = 30.0
 var _is_dead: bool = false
+var _base_scale: Vector2 = Vector2.ONE
+var _squash_phase: float = 0.0
 
 static var _active_goblins: Array = []
 static var _click_cooldown_until_msec: int = 0
@@ -96,6 +108,8 @@ static var _result_layer: CanvasLayer = null
 
 
 func _ready() -> void:
+	_base_scale = scale
+
 	if _active_goblins.is_empty():
 		_click_cooldown_until_msec = 0
 		_panic_ends_at_msec = 0
@@ -236,6 +250,7 @@ func _process(delta: float) -> void:
 	if self == _get_input_dispatcher():
 		_update_level_timers()
 
+	var frame_start_position: Vector2 = global_position
 	_state_timer -= delta
 
 	match _state:
@@ -273,6 +288,11 @@ func _process(delta: float) -> void:
 
 		State.DEAD:
 			pass
+
+	var movement_speed: float = 0.0
+	if delta > 0.0:
+		movement_speed = global_position.distance_to(frame_start_position) / delta
+	_update_walk_squash(delta, movement_speed)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -421,6 +441,7 @@ func _kill_goblin() -> void:
 	_state = State.DEAD
 	_state_timer = 0.0
 	_scatter_retarget_timer = 0.0
+	_reset_walk_squash()
 	_apply_dead_face()
 	modulate = Color.WHITE
 
@@ -532,6 +553,46 @@ func _ensure_timer_ui() -> void:
 	_target_preview_face = Sprite2D.new()
 	_target_preview_face.name = "Face"
 	_target_preview_body.add_child(_target_preview_face)
+
+
+func _update_walk_squash(delta: float, movement_speed: float) -> void:
+	if !walk_squash_enabled or _is_dead:
+		_return_squash_to_base(delta)
+		return
+
+	if movement_speed <= 1.0:
+		_return_squash_to_base(delta)
+		return
+
+	var reference_speed: float = maxf(1.0, walk_squash_reference_speed)
+	var speed_factor: float = clampf(
+		movement_speed / reference_speed,
+		0.35,
+		maxf(0.35, walk_squash_max_speed_factor)
+	)
+	_squash_phase = fmod(
+		_squash_phase + delta * TAU * walk_squash_frequency * speed_factor,
+		TAU
+	)
+
+	var squash_amount: float = maxf(0.0, walk_squash_amount) * speed_factor
+	var pulse: float = sin(_squash_phase)
+	var target_scale: Vector2 = Vector2(
+		_base_scale.x * (1.0 + pulse * squash_amount),
+		_base_scale.y * (1.0 - pulse * squash_amount)
+	)
+	var blend: float = clampf(walk_squash_lerp_speed * delta, 0.0, 1.0)
+	scale = scale.lerp(target_scale, blend)
+
+
+func _return_squash_to_base(delta: float) -> void:
+	var blend: float = clampf(walk_squash_return_speed * delta, 0.0, 1.0)
+	scale = scale.lerp(_base_scale, blend)
+
+
+func _reset_walk_squash() -> void:
+	_squash_phase = 0.0
+	scale = _base_scale
 
 
 func _create_timer_label(label_name: String, label_position: Vector2) -> Label:
