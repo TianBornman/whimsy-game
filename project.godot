@@ -20,6 +20,7 @@ config/icon="res://icon.svg"
 window/size/mode=3
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
+mouse_cursor/custom_image="uid://bwqhvdggln6t8"
 
 [file_customization]
 
