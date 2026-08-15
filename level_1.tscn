@@ -1,0 +1,102 @@
+[gd_scene format=3 uid="uid://dhdjx3cjr61le"]
+
+[ext_resource type="Script" uid="uid://cdchxksdnvp5a" path="res://scripts/goblin_controller.gd" id="1_3hls8"]
+
+[sub_resource type="PlaceholderTexture2D" id="PlaceholderTexture2D_hbghi"]
+size = Vector2(250, 250)
+
+[node name="Level1" type="Node2D" unique_id=1943586023]
+
+[node name="goblin" type="Sprite2D" parent="." unique_id=1359218587]
+scale = Vector2(0.25, 0.25)
+texture = SubResource("PlaceholderTexture2D_hbghi")
+script = ExtResource("1_3hls8")
+min_bounds = Vector2(0, 0)
+max_bounds = Vector2(1000, 50)
+speed_range = Vector2(200, 250)
+idle_duration_range = Vector2(0.25, 1.25)
+use_global_position = true
+
+[node name="goblin2" type="Sprite2D" parent="." unique_id=1593817651]
+scale = Vector2(0.25, 0.25)
+texture = SubResource("PlaceholderTexture2D_hbghi")
+script = ExtResource("1_3hls8")
+min_bounds = Vector2(0, 0)
+max_bounds = Vector2(1000, 900)
+speed_range = Vector2(200, 250)
+idle_duration_range = Vector2(0.25, 1.25)
+
+[node name="goblin3" type="Sprite2D" parent="." unique_id=1639528956]
+scale = Vector2(0.25, 0.25)
+texture = SubResource("PlaceholderTexture2D_hbghi")
+script = ExtResource("1_3hls8")
+min_bounds = Vector2(0, 0)
+max_bounds = Vector2(1000, 900)
+speed_range = Vector2(200, 250)
+idle_duration_range = Vector2(0.25, 1.25)
+
+[node name="goblin4" type="Sprite2D" parent="." unique_id=459931447]
+scale = Vector2(0.25, 0.25)
+texture = SubResource("PlaceholderTexture2D_hbghi")
+script = ExtResource("1_3hls8")
+min_bounds = Vector2(0, 0)
+max_bounds = Vector2(1000, 900)
+speed_range = Vector2(200, 250)
+idle_duration_range = Vector2(0.25, 1.25)
+
+[node name="goblin5" type="Sprite2D" parent="." unique_id=1037711643]
+scale = Vector2(0.25, 0.25)
+texture = SubResource("PlaceholderTexture2D_hbghi")
+script = ExtResource("1_3hls8")
+min_bounds = Vector2(0, 0)
+max_bounds = Vector2(1000, 900)
+speed_range = Vector2(200, 250)
+idle_duration_range = Vector2(0.25, 1.25)
+
+[node name="goblin6" type="Sprite2D" parent="." unique_id=516535238]
+scale = Vector2(0.25, 0.25)
+texture = SubResource("PlaceholderTexture2D_hbghi")
+script = ExtResource("1_3hls8")
+min_bounds = Vector2(0, 0)
+max_bounds = Vector2(1000, 900)
+speed_range = Vector2(200, 250)
+idle_duration_range = Vector2(0.25, 1.25)
+
+[node name="goblin7" type="Sprite2D" parent="." unique_id=1428743744]
+scale = Vector2(0.25, 0.25)
+texture = SubResource("PlaceholderTexture2D_hbghi")
+script = ExtResource("1_3hls8")
+min_bounds = Vector2(0, 0)
+max_bounds = Vector2(1000, 900)
+speed_range = Vector2(200, 250)
+idle_duration_range = Vector2(0.25, 1.25)
+
+[node name="goblin8" type="Sprite2D" parent="." unique_id=644102671]
+scale = Vector2(0.25, 0.25)
+texture = SubResource("PlaceholderTexture2D_hbghi")
+script = ExtResource("1_3hls8")
+min_bounds = Vector2(0, 0)
+max_bounds = Vector2(1000, 900)
+speed_range = Vector2(200, 250)
+idle_duration_range = Vector2(0.25, 1.25)
+
+[node name="goblin9" type="Sprite2D" parent="." unique_id=191490722]
+scale = Vector2(0.25, 0.25)
+texture = SubResource("PlaceholderTexture2D_hbghi")
+script = ExtResource("1_3hls8")
+min_bounds = Vector2(0, 0)
+max_bounds = Vector2(1000, 900)
+speed_range = Vector2(200, 250)
+idle_duration_range = Vector2(0.25, 1.25)
+
+[node name="goblin10" type="Sprite2D" parent="." unique_id=576445542]
+scale = Vector2(0.25, 0.25)
+texture = SubResource("PlaceholderTexture2D_hbghi")
+script = ExtResource("1_3hls8")
+min_bounds = Vector2(0, 0)
+max_bounds = Vector2(1000, 900)
+speed_range = Vector2(200, 250)
+idle_duration_range = Vector2(0.25, 1.25)
+
+[node name="camera" type="Camera2D" parent="." unique_id=1507845177]
+position = Vector2(586, 335)
