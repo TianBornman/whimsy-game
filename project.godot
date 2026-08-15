@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="Whimsy Game"
-run/main_scene="uid://dhdjx3cjr61le"
+run/main_scene="res://level_1.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 config/icon="res://icon.svg"
 

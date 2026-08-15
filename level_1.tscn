@@ -3,16 +3,19 @@
 [ext_resource type="Script" uid="uid://iairaulkov3" path="res://scripts/level_goblin_spawner.gd" id="1_itquq"]
 [ext_resource type="PackedScene" uid="uid://dxkfs2i5mh2bm" path="res://goblin.tscn" id="2_3hls8"]
 [ext_resource type="Texture2D" uid="uid://imqbqtn2mp8j" path="res://sprites/background_floor.png" id="3_hn12h"]
-[ext_resource type="Texture2D" uid="uid://kyjrsnundpn7" path="res://sprites/plants/shrub_1.png" id="4_rka8t"]
-[ext_resource type="Texture2D" uid="uid://dc37ahuul80gq" path="res://sprites/plants/shrub_3.png" id="5_5hph3"]
-[ext_resource type="Texture2D" uid="uid://dui1mikwirkt5" path="res://sprites/plants/tree_1.png" id="6_j7kpp"]
-[ext_resource type="Texture2D" uid="uid://bk416fqv17nrf" path="res://sprites/plants/tree_4.png" id="7_bjebc"]
-[ext_resource type="Texture2D" uid="uid://dgqaq4b5bfj7f" path="res://sprites/plants/tree_5.png" id="8_bjebc"]
-[ext_resource type="Texture2D" uid="uid://c2fyed4hvfysi" path="res://sprites/plants/tree_3.png" id="9_5rr72"]
+[ext_resource type="PackedScene" path="res://scenes/obstacles/shrub_1.tscn" id="4_rka8t"]
+[ext_resource type="PackedScene" path="res://scenes/obstacles/shrub_2.tscn" id="5_5hph3"]
+[ext_resource type="PackedScene" path="res://scenes/obstacles/shrub_3.tscn" id="6_m6f3s"]
+[ext_resource type="PackedScene" path="res://scenes/obstacles/tree_1.tscn" id="7_j7kpp"]
+[ext_resource type="PackedScene" path="res://scenes/obstacles/tree_2.tscn" id="8_apdrj"]
+[ext_resource type="PackedScene" path="res://scenes/obstacles/tree_3.tscn" id="9_5rr72"]
+[ext_resource type="PackedScene" path="res://scenes/obstacles/tree_4.tscn" id="10_bjebc"]
+[ext_resource type="PackedScene" path="res://scenes/obstacles/tree_5.tscn" id="11_3gywq"]
 
 [node name="Level1" type="Node2D" unique_id=1943586023]
 script = ExtResource("1_itquq")
 goblin_scene = ExtResource("2_3hls8")
+obstacle_scenes = Array[PackedScene]([ExtResource("4_rka8t"), ExtResource("5_5hph3"), ExtResource("6_m6f3s"), ExtResource("7_j7kpp"), ExtResource("8_apdrj"), ExtResource("9_5rr72"), ExtResource("10_bjebc"), ExtResource("11_3gywq")])
 
 [node name="BackgroundFloor" type="Sprite2D" parent="." unique_id=2094671606]
 position = Vector2(581.87506, 331)
@@ -23,84 +26,4 @@ texture = ExtResource("3_hn12h")
 position = Vector2(586, 335)
 
 [node name="bg_object_parent" type="Node2D" parent="." unique_id=1161363108]
-
-[node name="Shrub1" type="Sprite2D" parent="bg_object_parent" unique_id=144166278]
-position = Vector2(181.00002, 485)
-scale = Vector2(0.245, 0.245)
-texture = ExtResource("4_rka8t")
-
-[node name="Shrub2" type="Sprite2D" parent="bg_object_parent" unique_id=1904960322]
-position = Vector2(475, 553)
-scale = Vector2(0.245, 0.245)
-texture = ExtResource("4_rka8t")
-
-[node name="Shrub3" type="Sprite2D" parent="bg_object_parent" unique_id=1252594292]
-position = Vector2(163, 206)
-scale = Vector2(0.245, 0.245)
-texture = ExtResource("4_rka8t")
-
-[node name="Shrub4" type="Sprite2D" parent="bg_object_parent" unique_id=1123166961]
-position = Vector2(721, 413)
-scale = Vector2(0.245, 0.245)
-texture = ExtResource("4_rka8t")
-
-[node name="Shrub5" type="Sprite2D" parent="bg_object_parent" unique_id=1359852216]
-position = Vector2(938, 485)
-scale = Vector2(0.3, 0.3)
-texture = ExtResource("5_5hph3")
-
-[node name="Shrub6" type="Sprite2D" parent="bg_object_parent" unique_id=308398541]
-position = Vector2(1028, 323)
-scale = Vector2(0.3, 0.3)
-texture = ExtResource("5_5hph3")
-
-[node name="Shrub7" type="Sprite2D" parent="bg_object_parent" unique_id=488686443]
-position = Vector2(655, 184)
-scale = Vector2(0.3, 0.3)
-texture = ExtResource("5_5hph3")
-
-[node name="Tree1" type="Sprite2D" parent="bg_object_parent" unique_id=1433379234]
-position = Vector2(146.00003, -15.999996)
-scale = Vector2(0.365, 0.365)
-texture = ExtResource("6_j7kpp")
-
-[node name="Tree2" type="Sprite2D" parent="bg_object_parent" unique_id=1521826799]
-position = Vector2(1048, -2.000001)
-scale = Vector2(0.365, 0.365)
-texture = ExtResource("6_j7kpp")
-
-[node name="Tree3" type="Sprite2D" parent="bg_object_parent" unique_id=638402450]
-position = Vector2(389.00018, 352.99997)
-scale = Vector2(0.365, 0.365)
-texture = ExtResource("6_j7kpp")
-
-[node name="Tree4" type="Sprite2D" parent="bg_object_parent" unique_id=112355830]
-position = Vector2(515, 52)
-scale = Vector2(0.39, 0.39)
-texture = ExtResource("7_bjebc")
-
-[node name="Tree6" type="Sprite2D" parent="bg_object_parent" unique_id=13329923]
-position = Vector2(1057, 494)
-scale = Vector2(0.4, 0.4)
-texture = ExtResource("8_bjebc")
-
-[node name="Tree7" type="Sprite2D" parent="bg_object_parent" unique_id=2036381090]
-position = Vector2(623, 473)
-scale = Vector2(0.4, 0.4)
-texture = ExtResource("8_bjebc")
-
-[node name="Tree8" type="Sprite2D" parent="bg_object_parent" unique_id=468602368]
-position = Vector2(97.00006, 285)
-scale = Vector2(0.4, 0.4)
-texture = ExtResource("8_bjebc")
-
-[node name="Tree9" type="Sprite2D" parent="bg_object_parent" unique_id=1293421034]
-position = Vector2(1081, 167)
-scale = Vector2(0.41, 0.41)
-texture = ExtResource("9_5rr72")
-flip_h = true
-
-[node name="Tree5" type="Sprite2D" parent="bg_object_parent" unique_id=1507756540]
-position = Vector2(835, 204)
-scale = Vector2(0.39, 0.39)
-texture = ExtResource("7_bjebc")
+y_sort_enabled = true

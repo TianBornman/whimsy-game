@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dui1mikwirkt5"
-path="res://.godot/imported/tree_1.png-f7d84ad983e6ca1f40f71654f7c889b8.ctex"
+uid="uid://5qbqsd4b3f0v"
+path="res://.godot/imported/tree_2.png-670ce038e30d7966979379d884270957.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://sprites/plants/tree_1.png"
-dest_files=["res://.godot/imported/tree_1.png-f7d84ad983e6ca1f40f71654f7c889b8.ctex"]
+source_file="res://sprites/obstacles/tree_2.png"
+dest_files=["res://.godot/imported/tree_2.png-670ce038e30d7966979379d884270957.ctex"]
 
 [params]
 

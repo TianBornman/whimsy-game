@@ -1,25 +1,25 @@
-[gd_scene format=3 uid="uid://c544r3esklqbb"]
+[gd_scene format=3 uid="uid://dki6m608gegbv"]
 
-[ext_resource type="Texture2D" uid="uid://dxvu01p46fy86" path="res://sprites/plants/tree_2.png" id="1_j8th4"]
+[ext_resource type="Texture2D" uid="uid://dgqaq4b5bfj7f" path="res://sprites/obstacles/tree_5.png" id="1_8xt1g"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_lb6d8"]
-size = Vector2(28, 76)
+size = Vector2(43.5, 91)
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_oc3ar"]
-radius = 52.009613
+radius = 68.007355
 
-[node name="Plant" type="Node2D" unique_id=1622051805]
+[node name="Obstacle" type="Node2D" unique_id=1622051805]
 
 [node name="sprite" type="Sprite2D" parent="." unique_id=1202615412]
 scale = Vector2(0.35, 0.35)
-texture = ExtResource("1_j8th4")
+texture = ExtResource("1_8xt1g")
 
 [node name="area" type="Area2D" parent="." unique_id=1173312939]
 
 [node name="collider" type="CollisionShape2D" parent="area" unique_id=717592774]
-position = Vector2(1, 37)
+position = Vector2(-3.75, 46)
 shape = SubResource("RectangleShape2D_lb6d8")
 
 [node name="collider2" type="CollisionShape2D" parent="area" unique_id=832919032]
-position = Vector2(12, -36)
+position = Vector2(-1, -48)
 shape = SubResource("CircleShape2D_oc3ar")

@@ -31,7 +31,12 @@ const RESOLUTION_CHOICE_COLOR_QUIT: Color = Color(1.0, 0.0, 0.0, 1.0)
 const RESOLUTION_CHOICE_SPACING: float = 120.0
 const RESOLUTION_CHOICE_OFFSCREEN_PADDING: float = 220.0
 const RESOLUTION_CHOICE_WALK_SPEED: float = 320.0
+const HITBOX_POINT_QUERY_MAX_RESULTS: int = 64
 const DEFAULT_GOBLIN_SCENE_PATH: String = "res://goblin.tscn"
+const DEPTH_Z_INDEX_MIN: int = -4096
+const DEPTH_Z_INDEX_MAX: int = 4096
+const OBSTACLE_CLICK_BLOCKER_GROUP: String = "obstacle_click_blocker"
+const OBSTACLE_CLICK_BLOCKER_AREA_GROUP: String = "obstacle_click_blocker_area"
 
 ## Movement bounds are shared by every goblin and come from the visible
 ## screen. The script keeps the whole sprite inside, not just its center
@@ -55,9 +60,13 @@ const DEFAULT_GOBLIN_SCENE_PATH: String = "res://goblin.tscn"
 @export var flip_with_direction: bool = true
 
 ## Make this goblin the level target. The target keeps its randomized body
-## hue/face, and a matching portrait is shown under the timers.
+## color/face, and a matching portrait is shown under the timers.
 @export var is_target: bool = false
 @export var win_message: String = "YOU WIN!"
+
+## Clicks are detected through this Area2D, not from the Sprite2D texture
+## rectangle. Resize its CollisionShape2D in the scene to tune the hitbox.
+@export var hitbox_path: NodePath = NodePath("Hitbox")
 
 ## Optional face randomization. Assign the Face child here, then fill
 ## face_textures with every face image this goblin can use.
@@ -67,6 +76,20 @@ const DEFAULT_GOBLIN_SCENE_PATH: String = "res://goblin.tscn"
 ## Optional face shown after this goblin is shot/killed.
 @export var dead_face_texture: Texture2D
 
+## Optional death sounds. One random stream plays when this goblin dies.
+@export var death_sound_streams: Array[AudioStream] = []
+@export_range(-40.0, 12.0, 0.5, "suffix:dB") var death_sound_volume_db: float = 0.0
+
+## Optional poof effect when this goblin dies. Uses small sprite particles so it
+## works without needing a prebuilt particle scene.
+@export var death_poof_texture: Texture2D
+@export_range(1, 32, 1) var death_poof_particle_count: int = 12
+@export var death_poof_lifetime: float = 0.45
+@export var death_poof_radius: float = 48.0
+@export var death_poof_start_scale_range: Vector2 = Vector2(0.07, 0.13)
+@export var death_poof_end_scale_multiplier: float = 1.35
+@export var death_poof_color: Color = Color(1.0, 1.0, 1.0, 0.9)
+
 ## Optional hat randomization. Fill hat_textures with every hat image this
 ## goblin can use. Add a blank/transparent texture here if "no hat" should
 ## be one of the random results.
@@ -74,11 +97,20 @@ const DEFAULT_GOBLIN_SCENE_PATH: String = "res://goblin.tscn"
 @export var hat_sprite_path: NodePath = NodePath("Hat")
 @export var hat_textures: Array[Texture2D] = []
 
-## Body-only hue randomization. This uses self_modulate so child face sprites
-## keep their own colors.
-@export var randomize_body_hue_on_ready: bool = true
-@export var body_hue_saturation: float = 0.65
-@export var body_hue_value: float = 1.0
+## Optional clothing randomization. Fill clothing_textures with every outfit
+## overlay this goblin can use. Add a blank/transparent texture here if
+## "no clothes" should be one of the random results.
+@export var randomize_clothing_on_ready: bool = true
+@export var clothing_sprite_path: NodePath = NodePath("Clothing")
+@export var clothing_textures: Array[Texture2D] = []
+
+## Body-only color randomization. Each goblin chooses one shared palette step
+## between these two colors so the target is not the only unique hue. This uses
+## self_modulate so child face/clothing/hat sprites keep their own colors.
+@export var randomize_body_color_on_ready: bool = true
+@export var body_color_a: Color = Color(0.45, 0.95, 0.25, 1.0)
+@export var body_color_b: Color = Color(0.14, 0.55, 0.24, 1.0)
+@export_range(2, 12, 1) var body_color_steps: int = 3
 
 ## Cute squash/stretch while moving. It is driven by actual pixels moved this
 ## frame, so faster panic/flee movement bounces harder and quicker.
@@ -89,6 +121,19 @@ const DEFAULT_GOBLIN_SCENE_PATH: String = "res://goblin.tscn"
 @export var walk_squash_max_speed_factor: float = 2.0
 @export var walk_squash_lerp_speed: float = 18.0
 @export var walk_squash_return_speed: float = 10.0
+
+## Death fall illusion. The goblin quickly tips, skews, and flattens a little
+## so it reads as falling over from the camera's perspective.
+@export var death_fall_enabled: bool = true
+@export var death_fall_duration: float = 0.24
+@export var death_fall_rotation_degrees_range: Vector2 = Vector2(52.0, 72.0)
+@export var death_fall_skew_degrees: float = 10.0
+@export var death_fall_scale_multiplier: Vector2 = Vector2(1.12, 0.62)
+
+## Fake 2D perspective depth. The z_index follows the goblin's feet so it
+## draws behind obstacles above it and in front of obstacles below it.
+@export var update_depth_z_index: bool = true
+@export var depth_sort_feet_offset: float = 45.0
 
 ## --- Internal state ---
 
@@ -119,6 +164,7 @@ static var _runoff_timer_label: Label = null
 static var _target_preview_label: Label = null
 static var _target_preview_root: Node2D = null
 static var _target_preview_body: Sprite2D = null
+static var _target_preview_clothing: Sprite2D = null
 static var _target_preview_face: Sprite2D = null
 static var _target_preview_hat: Sprite2D = null
 static var _result_layer: CanvasLayer = null
@@ -144,6 +190,7 @@ func _ready() -> void:
 		_target_preview_label = null
 		_target_preview_root = null
 		_target_preview_body = null
+		_target_preview_clothing = null
 		_target_preview_face = null
 		_target_preview_hat = null
 		_result_layer = null
@@ -154,14 +201,19 @@ func _ready() -> void:
 	if !_active_goblins.has(self):
 		_active_goblins.append(self)
 
+	_validate_click_hitbox()
+
 	if randomize_face_on_ready:
 		randomize_face()
+
+	if randomize_clothing_on_ready:
+		randomize_clothing()
 
 	if randomize_hat_on_ready:
 		randomize_hat()
 
-	if randomize_body_hue_on_ready:
-		randomize_body_hue()
+	if randomize_body_color_on_ready:
+		randomize_body_color()
 
 	if is_target:
 		_set_target_preview()
@@ -178,6 +230,7 @@ func _ready() -> void:
 	# In case the sprite was placed/spawned outside its own bounds,
 	# snap it inside immediately rather than letting it wander from there.
 	_set_clamped_position(global_position)
+	_update_depth_z_index()
 
 
 func _exit_tree() -> void:
@@ -196,6 +249,22 @@ func randomize_face() -> void:
 	face_sprite.texture = face_textures[randi_range(0, face_textures.size() - 1)]
 
 
+func randomize_clothing() -> void:
+	var clothing_sprite: Sprite2D = _get_clothing_sprite()
+	if clothing_sprite == null:
+		if !clothing_textures.is_empty():
+			push_warning("Goblin clothing randomization skipped: no Clothing Sprite2D was found.")
+		return
+
+	if clothing_textures.is_empty():
+		clothing_sprite.texture = null
+		clothing_sprite.visible = false
+		return
+
+	clothing_sprite.visible = true
+	clothing_sprite.texture = clothing_textures[randi_range(0, clothing_textures.size() - 1)]
+
+
 func randomize_hat() -> void:
 	var hat_sprite: Sprite2D = _get_hat_sprite()
 	if hat_sprite == null:
@@ -212,13 +281,11 @@ func randomize_hat() -> void:
 	hat_sprite.texture = hat_textures[randi_range(0, hat_textures.size() - 1)]
 
 
-func randomize_body_hue() -> void:
-	self_modulate = Color.from_hsv(
-		randf(),
-		clampf(body_hue_saturation, 0.0, 1.0),
-		maxf(0.0, body_hue_value),
-		1.0
-	)
+func randomize_body_color() -> void:
+	var color_steps: int = maxi(2, body_color_steps)
+	var color_index: int = randi_range(0, color_steps - 1)
+	var blend_weight: float = float(color_index) / float(color_steps - 1)
+	self_modulate = body_color_a.lerp(body_color_b, blend_weight)
 
 
 func _set_target_preview() -> void:
@@ -235,37 +302,29 @@ func _set_target_preview() -> void:
 	_target_preview_body.self_modulate = self_modulate
 	_target_preview_body.modulate = Color.WHITE
 
-	var source_face: Sprite2D = _get_face_sprite()
-	if source_face == null or source_face.texture == null:
-		_target_preview_face.visible = false
+	_copy_preview_layer(_get_clothing_sprite(), _target_preview_clothing)
+	_copy_preview_layer(_get_face_sprite(), _target_preview_face)
+	_copy_preview_layer(_get_hat_sprite(), _target_preview_hat)
+
+
+func _copy_preview_layer(source_sprite: Sprite2D, target_sprite: Sprite2D) -> void:
+	if !is_instance_valid(target_sprite):
 		return
 
-	_target_preview_face.visible = true
-	_target_preview_face.texture = source_face.texture
-	_target_preview_face.position = source_face.position
-	_target_preview_face.rotation = source_face.rotation
-	_target_preview_face.scale = source_face.scale
-	_target_preview_face.centered = source_face.centered
-	_target_preview_face.offset = source_face.offset
-	_target_preview_face.flip_h = false
-	_target_preview_face.self_modulate = source_face.self_modulate
-	_target_preview_face.modulate = source_face.modulate
+	if source_sprite == null or !source_sprite.visible or source_sprite.texture == null:
+		target_sprite.visible = false
+		return
 
-	if is_instance_valid(_target_preview_hat):
-		var source_hat: Sprite2D = _get_hat_sprite()
-		if source_hat == null or !source_hat.visible or source_hat.texture == null:
-			_target_preview_hat.visible = false
-		else:
-			_target_preview_hat.visible = true
-			_target_preview_hat.texture = source_hat.texture
-			_target_preview_hat.position = source_hat.position
-			_target_preview_hat.rotation = source_hat.rotation
-			_target_preview_hat.scale = source_hat.scale
-			_target_preview_hat.centered = source_hat.centered
-			_target_preview_hat.offset = source_hat.offset
-			_target_preview_hat.flip_h = false
-			_target_preview_hat.self_modulate = source_hat.self_modulate
-			_target_preview_hat.modulate = source_hat.modulate
+	target_sprite.visible = true
+	target_sprite.texture = source_sprite.texture
+	target_sprite.position = source_sprite.position
+	target_sprite.rotation = source_sprite.rotation
+	target_sprite.scale = source_sprite.scale
+	target_sprite.centered = source_sprite.centered
+	target_sprite.offset = source_sprite.offset
+	target_sprite.flip_h = false
+	target_sprite.self_modulate = source_sprite.self_modulate
+	target_sprite.modulate = source_sprite.modulate
 
 
 func _get_face_sprite() -> Sprite2D:
@@ -288,6 +347,15 @@ func _get_hat_sprite() -> Sprite2D:
 			return path_sprite
 
 	return _find_descendant_sprite_named(self, "hat")
+
+
+func _get_clothing_sprite() -> Sprite2D:
+	if String(clothing_sprite_path) != "":
+		var path_sprite: Sprite2D = get_node_or_null(clothing_sprite_path) as Sprite2D
+		if path_sprite != null:
+			return path_sprite
+
+	return _find_descendant_sprite_named(self, "cloth")
 
 
 func _find_descendant_sprite_named(parent_node: Node, name_part: String) -> Sprite2D:
@@ -368,6 +436,19 @@ func _process(delta: float) -> void:
 	if delta > 0.0:
 		movement_speed = global_position.distance_to(frame_start_position) / delta
 	_update_walk_squash(delta, movement_speed)
+	_update_depth_z_index()
+
+
+func _update_depth_z_index() -> void:
+	if !update_depth_z_index:
+		return
+
+	z_as_relative = false
+	z_index = clampi(
+		int(round(global_position.y + depth_sort_feet_offset)),
+		DEPTH_Z_INDEX_MIN,
+		DEPTH_Z_INDEX_MAX
+	)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -419,6 +500,12 @@ func _get_input_dispatcher() -> Sprite2D:
 
 
 func _get_goblin_at_global_point(global_point: Vector2) -> Sprite2D:
+	var hitboxes_at_point: Array = _get_hitboxes_at_global_point(global_point)
+	if hitboxes_at_point.is_empty():
+		return null
+
+	var top_goblin: Sprite2D = null
+	var top_goblin_z: int = DEPTH_Z_INDEX_MIN - 1
 	for i in range(_active_goblins.size() - 1, -1, -1):
 		var goblin: Sprite2D = _active_goblins[i]
 		if !is_instance_valid(goblin):
@@ -428,14 +515,90 @@ func _get_goblin_at_global_point(global_point: Vector2) -> Sprite2D:
 		if goblin._is_dead or !goblin.is_visible_in_tree():
 			continue
 
-		if goblin._is_global_point_inside_sprite(global_point):
-			return goblin
+		var hitbox: Area2D = goblin._get_click_hitbox()
+		if hitbox != null and hitboxes_at_point.has(hitbox):
+			var goblin_z: int = goblin._get_click_sort_z()
+			if top_goblin == null or goblin_z >= top_goblin_z:
+				top_goblin = goblin
+				top_goblin_z = goblin_z
+
+	if top_goblin == null:
+		return null
+
+	# If an obstacle hitbox is visually in front of the goblin at this point,
+	# the obstacle eats the click instead of shooting the okie hiding behind it.
+	if _get_top_obstacle_click_blocker_z(hitboxes_at_point) >= top_goblin_z:
+		return null
+
+	return top_goblin
+
+
+func _get_click_sort_z() -> int:
+	return z_index
+
+
+func _get_top_obstacle_click_blocker_z(hitboxes_at_point: Array) -> int:
+	var top_blocker_z: int = DEPTH_Z_INDEX_MIN - 1
+	for hitbox in hitboxes_at_point:
+		var area: Area2D = hitbox as Area2D
+		if area == null or !area.is_in_group(OBSTACLE_CLICK_BLOCKER_AREA_GROUP):
+			continue
+
+		var blocker_root: CanvasItem = _find_ancestor_canvas_item_in_group(
+			area,
+			OBSTACLE_CLICK_BLOCKER_GROUP
+		)
+		if blocker_root == null:
+			blocker_root = area
+
+		top_blocker_z = maxi(top_blocker_z, blocker_root.z_index)
+
+	return top_blocker_z
+
+
+func _find_ancestor_canvas_item_in_group(node: Node, group_name: String) -> CanvasItem:
+	var current: Node = node
+	while current != null:
+		if current.is_in_group(group_name):
+			var current_canvas_item: CanvasItem = current as CanvasItem
+			if current_canvas_item != null:
+				return current_canvas_item
+
+		current = current.get_parent()
 
 	return null
 
 
-func _is_global_point_inside_sprite(global_point: Vector2) -> bool:
-	return get_rect().has_point(to_local(global_point))
+func _get_hitboxes_at_global_point(global_point: Vector2) -> Array:
+	var query: PhysicsPointQueryParameters2D = PhysicsPointQueryParameters2D.new()
+	query.position = global_point
+	query.collide_with_areas = true
+	query.collide_with_bodies = false
+	query.collision_mask = 0xFFFFFFFF
+
+	var results: Array[Dictionary] = get_world_2d().direct_space_state.intersect_point(
+		query,
+		HITBOX_POINT_QUERY_MAX_RESULTS
+	)
+	var hitboxes: Array = []
+	for result in results:
+		var collider: Object = result.get("collider")
+		if collider is Area2D:
+			hitboxes.append(collider)
+
+	return hitboxes
+
+
+func _get_click_hitbox() -> Area2D:
+	return get_node_or_null(hitbox_path) as Area2D
+
+
+func _validate_click_hitbox() -> void:
+	var hitbox: Area2D = _get_click_hitbox()
+	if hitbox == null:
+		push_warning(
+			"Goblin click hitbox missing: add an Area2D named 'Hitbox' with a CollisionShape2D child."
+		)
 
 
 func _is_click_cooldown_active() -> bool:
@@ -521,7 +684,7 @@ func _ensure_scatter_runoff(scatter_origin: Vector2) -> void:
 
 
 func _kill_goblin() -> void:
-	if _is_resolution_choice():
+	if _is_resolution_choice() or _is_dead:
 		return
 
 	_is_dead = true
@@ -530,7 +693,10 @@ func _kill_goblin() -> void:
 	_state_timer = 0.0
 	_scatter_retarget_timer = 0.0
 	_reset_walk_squash()
+	_play_death_fall()
 	_apply_dead_face()
+	_play_random_death_sound()
+	_spawn_death_poof()
 	modulate = Color.WHITE
 
 
@@ -544,6 +710,104 @@ func _apply_dead_face() -> void:
 		return
 
 	face_sprite.texture = dead_face_texture
+
+
+func _play_death_fall() -> void:
+	if !death_fall_enabled:
+		return
+
+	var duration: float = maxf(0.01, death_fall_duration)
+	var min_rotation_degrees: float = minf(
+		death_fall_rotation_degrees_range.x,
+		death_fall_rotation_degrees_range.y
+	)
+	var max_rotation_degrees: float = maxf(
+		death_fall_rotation_degrees_range.x,
+		death_fall_rotation_degrees_range.y
+	)
+	var fall_direction: float = -1.0 if randf() < 0.5 else 1.0
+	var target_rotation: float = rotation + deg_to_rad(
+		randf_range(min_rotation_degrees, max_rotation_degrees) * fall_direction
+	)
+	var target_skew: float = deg_to_rad(death_fall_skew_degrees) * -fall_direction
+	var target_scale: Vector2 = Vector2(
+		_base_scale.x * _facing_sign * maxf(0.01, death_fall_scale_multiplier.x),
+		_base_scale.y * maxf(0.01, death_fall_scale_multiplier.y)
+	)
+
+	var tween: Tween = create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(self, "rotation", target_rotation, duration).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tween.tween_property(self, "skew", target_skew, duration).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_property(self, "scale", target_scale, duration).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+
+
+func _play_random_death_sound() -> void:
+	if death_sound_streams.is_empty():
+		return
+
+	var death_sound: AudioStream = death_sound_streams[randi_range(0, death_sound_streams.size() - 1)]
+	if death_sound == null:
+		return
+
+	var audio_player: AudioStreamPlayer2D = AudioStreamPlayer2D.new()
+	audio_player.name = "DeathSound"
+	audio_player.stream = death_sound
+	audio_player.volume_db = death_sound_volume_db
+	audio_player.finished.connect(audio_player.queue_free)
+	add_child(audio_player)
+	audio_player.play()
+
+
+func _spawn_death_poof() -> void:
+	if death_poof_texture == null:
+		return
+
+	var parent_node: Node = get_parent()
+	if parent_node == null:
+		parent_node = get_tree().current_scene
+	if parent_node == null:
+		parent_node = get_tree().root
+
+	var poof_root: Node2D = Node2D.new()
+	poof_root.name = "DeathPoof"
+	poof_root.z_as_relative = false
+	poof_root.z_index = clampi(z_index + 20, DEPTH_Z_INDEX_MIN, DEPTH_Z_INDEX_MAX)
+	parent_node.add_child(poof_root)
+	poof_root.global_position = global_position
+
+	var lifetime: float = maxf(0.05, death_poof_lifetime)
+	var particle_count: int = maxi(1, death_poof_particle_count)
+	var min_start_scale: float = maxf(0.01, minf(death_poof_start_scale_range.x, death_poof_start_scale_range.y))
+	var max_start_scale: float = maxf(min_start_scale, maxf(death_poof_start_scale_range.x, death_poof_start_scale_range.y))
+	var poof_radius: float = maxf(0.0, death_poof_radius)
+
+	var tween: Tween = poof_root.create_tween()
+	tween.set_parallel(true)
+	for i in range(particle_count):
+		var particle: Sprite2D = Sprite2D.new()
+		particle.name = "PoofParticle%d" % [i + 1]
+		particle.texture = death_poof_texture
+		particle.centered = true
+		particle.modulate = death_poof_color
+		particle.rotation = randf_range(-PI, PI)
+
+		var angle: float = randf() * TAU
+		var direction: Vector2 = Vector2.from_angle(angle)
+		var start_scale: float = randf_range(min_start_scale, max_start_scale)
+		var end_scale: float = start_scale * maxf(0.01, death_poof_end_scale_multiplier)
+		var end_position: Vector2 = direction * randf_range(poof_radius * 0.35, poof_radius)
+
+		particle.scale = Vector2.ONE * start_scale
+		poof_root.add_child(particle)
+
+		var fade_color: Color = death_poof_color
+		fade_color.a = 0.0
+		tween.tween_property(particle, "position", end_position, lifetime).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		tween.tween_property(particle, "scale", Vector2.ONE * end_scale, lifetime).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		tween.tween_property(particle, "modulate", fade_color, lifetime).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+
+	tween.finished.connect(poof_root.queue_free)
 
 
 func _queue_resolution_choices_after_scatter() -> void:
@@ -667,6 +931,7 @@ func _setup_resolution_choice(
 	_is_dead = false
 	_speed = maxf(_speed, RESOLUTION_CHOICE_WALK_SPEED)
 	global_position = start_position
+	_update_depth_z_index()
 	_target_pos = stand_position
 	_state = State.RESOLUTION_WALK_IN
 	_state_timer = 0.0
@@ -825,6 +1090,10 @@ func _ensure_timer_ui() -> void:
 	_target_preview_body.scale = scale
 	_target_preview_root.add_child(_target_preview_body)
 
+	_target_preview_clothing = Sprite2D.new()
+	_target_preview_clothing.name = "Clothing"
+	_target_preview_body.add_child(_target_preview_clothing)
+
 	_target_preview_face = Sprite2D.new()
 	_target_preview_face.name = "Face"
 	_target_preview_body.add_child(_target_preview_face)
@@ -835,7 +1104,10 @@ func _ensure_timer_ui() -> void:
 
 
 func _update_walk_squash(delta: float, movement_speed: float) -> void:
-	if !walk_squash_enabled or _is_dead:
+	if _is_dead:
+		return
+
+	if !walk_squash_enabled:
 		_return_squash_to_base(delta)
 		return
 
@@ -876,7 +1148,7 @@ func _reset_walk_squash() -> void:
 
 func _set_facing_from_direction(dir: Vector2) -> void:
 	# Sprite2D.flip_h only flips this node's texture, not child sprites.
-	# Use the node scale instead so the body, face, and hat stay locked
+	# Use the node scale instead so the body, clothing, face, and hat stay locked
 	# together when the goblin turns sideways.
 	flip_h = false
 	if !flip_with_direction or absf(dir.x) <= 0.01:

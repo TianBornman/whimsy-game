@@ -1,6 +1,6 @@
-[gd_scene format=3 uid="uid://dki6m608gegbv"]
+[gd_scene format=3 uid="uid://b173biehighpa"]
 
-[ext_resource type="Texture2D" uid="uid://dgqaq4b5bfj7f" path="res://sprites/plants/tree_5.png" id="1_8xt1g"]
+[ext_resource type="Texture2D" uid="uid://c2fyed4hvfysi" path="res://sprites/obstacles/tree_3.png" id="1_p8cr7"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_lb6d8"]
 size = Vector2(43.5, 91)
@@ -8,11 +8,11 @@ size = Vector2(43.5, 91)
 [sub_resource type="CircleShape2D" id="CircleShape2D_oc3ar"]
 radius = 68.007355
 
-[node name="Plant" type="Node2D" unique_id=1622051805]
+[node name="Obstacle" type="Node2D" unique_id=1622051805]
 
 [node name="sprite" type="Sprite2D" parent="." unique_id=1202615412]
 scale = Vector2(0.35, 0.35)
-texture = ExtResource("1_8xt1g")
+texture = ExtResource("1_p8cr7")
 
 [node name="area" type="Area2D" parent="." unique_id=1173312939]
 
