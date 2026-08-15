@@ -1,0 +1,21 @@
+[gd_scene format=3 uid="uid://dxkfs2i5mh2bm"]
+
+[ext_resource type="Script" uid="uid://cdchxksdnvp5a" path="res://scripts/goblin_controller.gd" id="1_dl46o"]
+[ext_resource type="Texture2D" uid="uid://c7sl5j8dtcbtu" path="res://sprites/goblin_body_base.png" id="1_vu5tg"]
+[ext_resource type="Texture2D" uid="uid://fn25llb7u5kl" path="res://sprites/faces/goblin_face_1.png" id="3_macxp"]
+[ext_resource type="Texture2D" uid="uid://cf5ukxc67qg1s" path="res://sprites/faces/goblin_face_2.png" id="4_yrgk8"]
+[ext_resource type="Texture2D" uid="uid://dxy1s8bvb2lao" path="res://sprites/faces/goblin_face_3.png" id="5_7ce6m"]
+[ext_resource type="Texture2D" uid="uid://c14mheh3lo41r" path="res://sprites/faces/goblin_face_4.png" id="6_j80iw"]
+[ext_resource type="Texture2D" uid="uid://dcd46ipowttwg" path="res://sprites/faces/goblin_face_5.png" id="7_66nyh"]
+
+[node name="goblin" type="Sprite2D" unique_id=1646362113]
+scale = Vector2(0.25, 0.25)
+texture = ExtResource("1_vu5tg")
+script = ExtResource("1_dl46o")
+speed_range = Vector2(200, 250)
+idle_duration_range = Vector2(0.25, 1.25)
+face_textures = Array[Texture2D]([ExtResource("3_macxp"), ExtResource("4_yrgk8"), ExtResource("5_7ce6m"), ExtResource("6_j80iw")])
+dead_face_texture = ExtResource("7_66nyh")
+
+[node name="Face" type="Sprite2D" parent="." unique_id=1331978515]
+texture = ExtResource("3_macxp")
