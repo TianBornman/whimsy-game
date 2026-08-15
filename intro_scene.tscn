@@ -1,0 +1,167 @@
+[gd_scene format=3 uid="uid://bsw1tfn4t8m8l"]
+
+[ext_resource type="Texture2D" uid="uid://dhb4wg7efcxfa" path="res://sprites/UI/wizza_2.png" id="1_fqpck"]
+[ext_resource type="Script" uid="uid://156evop4mv3b" path="res://scripts/intro_scene_controller.gd" id="1_x3ncd"]
+[ext_resource type="Texture2D" uid="uid://c1x4jqxvldjbw" path="res://sprites/UI/arrow_1.png" id="2_b1u3c"]
+[ext_resource type="FontFile" uid="uid://bbp8cws1mb8h8" path="res://FontdinerSwanky-Regular.ttf" id="2_h7lmj"]
+[ext_resource type="AudioStream" uid="uid://dnb8bunbhcj5u" path="res://sounds/intro_sound.mp3" id="3_2glrg"]
+[ext_resource type="Texture2D" uid="uid://d074c75gvigtf" path="res://sprites/UI/arrow_2.png" id="3_h7lmj"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_b1u3c"]
+font = ExtResource("2_h7lmj")
+font_size = 23
+
+[sub_resource type="AnimatedTexture" id="AnimatedTexture_lb6d8"]
+frames = 2
+speed_scale = 5.0
+frame_0/texture = ExtResource("2_b1u3c")
+frame_1/texture = ExtResource("3_h7lmj")
+frame_1/duration = 1.0
+
+[sub_resource type="Animation" id="Animation_2glrg"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Wizza:position")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector2(853, 671)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("dialogue:playing")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [false]
+}
+tracks/2/type = "value"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath("label_dialogue:text")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [""]
+}
+
+[sub_resource type="Animation" id="Animation_x3ncd"]
+resource_name = "intro_anim"
+length = 18.733334
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Wizza:position")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 1, 1.2421737, 1.5709844, 1.673281, 1.8333334, 1.9333333, 3.0333333, 3.2666667, 3.5333333, 3.7333333, 3.9666667, 4.0333333, 4.366667, 4.4333334, 4.633333, 4.7, 5.1, 5.1666665, 5.3666663, 5.433333, 5.9666667, 6.0333333, 6.233333, 6.2999997, 6.9, 6.9666667, 7.1666665, 7.233333, 7.9333334, 8, 8.2, 8.266666, 8.833333, 8.9, 9.099999, 9.166666, 9.533334, 9.6, 9.8, 9.866667, 10.533334, 10.6, 10.8, 10.866667, 11.433333, 11.5, 11.7, 11.766666, 12.166667, 12.233334, 12.433333, 12.5, 13.066667, 13.133333, 13.333333, 13.4, 13.7, 13.766666, 13.966666, 14.033333, 14.4, 14.466666, 14.666666, 14.733333, 15.866667, 15.933333, 16.133333, 16.2, 16.833334, 16.900002, 17.1, 17.166668),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector2(853, 671), Vector2(853, 326), Vector2(853, 326), Vector2(853, 309.84497), Vector2(853, 324.385), Vector2(853, 309.84497), Vector2(853, 324.385), Vector2(853, 324.385), Vector2(853, 309.84497), Vector2(853, 324.385), Vector2(853, 309.84497), Vector2(853, 324.385), Vector2(853, 309.84497), Vector2(853, 324.385), Vector2(853, 309.84497), Vector2(853, 324.385), Vector2(853, 309.84497), Vector2(853, 324.385), Vector2(853, 309.84497), Vector2(853, 324.385), Vector2(853, 309.84497), Vector2(853, 324.385), Vector2(853, 309.84497), Vector2(853, 324.385), Vector2(853, 309.84497), Vector2(853, 324.385), Vector2(853, 309.84497), Vector2(853, 324.385), Vector2(853, 309.84497), Vector2(853, 324.385), Vector2(853, 309.84497), Vector2(853, 324.385), Vector2(853, 309.84497), Vector2(853, 324.385), Vector2(853, 309.84497), Vector2(853, 324.385), Vector2(853, 309.84497), Vector2(853, 324.385), Vector2(853, 309.84497), Vector2(853, 324.385), Vector2(853, 309.84497), Vector2(853, 324.385), Vector2(853, 309.84497), Vector2(853, 324.385), Vector2(853, 309.84497), Vector2(853, 324.385), Vector2(853, 309.84497), Vector2(853, 324.385), Vector2(853, 309.84497), Vector2(853, 324.385), Vector2(853, 309.84497), Vector2(853, 324.385), Vector2(853, 309.84497), Vector2(853, 324.385), Vector2(853, 309.84497), Vector2(853, 324.385), Vector2(853, 309.84497), Vector2(853, 324.385), Vector2(853, 309.84497), Vector2(853, 324.385), Vector2(853, 309.84497), Vector2(853, 324.385), Vector2(853, 309.84497), Vector2(853, 324.385), Vector2(853, 309.84497), Vector2(853, 324.385), Vector2(853, 309.84497), Vector2(853, 324.385), Vector2(853, 309.84497), Vector2(853, 324.385), Vector2(853, 309.84497), Vector2(853, 324.385), Vector2(853, 309.84497)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("dialogue:playing")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 1.25),
+"transitions": PackedFloat32Array(1, 1),
+"update": 1,
+"values": [false, true]
+}
+tracks/2/type = "value"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath("label_dialogue:text")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0, 1, 2.91, 6.5666666, 9, 12.766666, 15.233334),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1),
+"update": 1,
+"values": ["", "Ohhh heh heh...", "I love myself a goblin!", "The Missus said I am not a Goblin", "I will wear the goblin! ", "That will show the Missus...", "I AM A GOBLIN!"]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_2glrg"]
+_data = {
+&"RESET": SubResource("Animation_2glrg"),
+&"intro_anim": SubResource("Animation_x3ncd")
+}
+
+[node name="main" type="CanvasLayer" unique_id=217027574]
+script = ExtResource("1_x3ncd")
+
+[node name="label_dialogue" type="Label" parent="." unique_id=863557479]
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 45.0
+offset_top = -130.0
+offset_right = 797.0
+offset_bottom = -80.0
+grow_vertical = 0
+label_settings = SubResource("LabelSettings_b1u3c")
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Button" type="Button" parent="." unique_id=1557452830]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -157.0
+offset_bottom = 138.0
+grow_horizontal = 0
+pivot_offset = Vector2(123, 41.5)
+theme_override_icons/icon = SubResource("AnimatedTexture_lb6d8")
+flat = true
+icon_alignment = 1
+expand_icon = true
+
+[node name="Wizza" type="TextureRect" parent="." unique_id=170983452]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = 277.0
+offset_top = 347.0
+offset_right = 527.00024
+offset_bottom = 697.00006
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("1_fqpck")
+
+[node name="anim_player" type="AnimationPlayer" parent="." unique_id=2074257024]
+libraries/ = SubResource("AnimationLibrary_2glrg")
+
+[node name="camera" type="Camera2D" parent="." unique_id=746237061]
+
+[node name="colour_box" type="ColorRect" parent="." unique_id=1652608328]
+self_modulate = Color(1, 1, 1, 0)
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="dialogue" type="AudioStreamPlayer" parent="." unique_id=101296958]
+stream = ExtResource("3_2glrg")
+
+[connection signal="pressed" from="Button" to="." method="_on_button_pressed"]
+[connection signal="animation_finished" from="anim_player" to="." method="_on_anim_player_animation_finished"]

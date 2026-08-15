@@ -40,3 +40,4 @@ folder_colors={
 rendering_device/driver.windows="d3d12"
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
+environment/defaults/default_clear_color=Color(6.738305e-07, 0.33211955, 0.44806176, 1)
