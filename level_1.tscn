@@ -1,12 +1,11 @@
-[gd_scene load_steps=3 format=3 uid="uid://dhdjx3cjr61le"]
+[gd_scene format=3 uid="uid://dhdjx3cjr61le"]
 
-[ext_resource type="Script" path="res://scripts/level_goblin_spawner.gd" id="1_itquq"]
+[ext_resource type="Script" uid="uid://iairaulkov3" path="res://scripts/level_goblin_spawner.gd" id="1_itquq"]
 [ext_resource type="PackedScene" uid="uid://dxkfs2i5mh2bm" path="res://goblin.tscn" id="2_3hls8"]
 
 [node name="Level1" type="Node2D" unique_id=1943586023]
 script = ExtResource("1_itquq")
 goblin_scene = ExtResource("2_3hls8")
-goblin_count = 10
 
 [node name="camera" type="Camera2D" parent="." unique_id=1507845177]
 position = Vector2(586, 335)
