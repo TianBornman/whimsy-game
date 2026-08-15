@@ -13,6 +13,7 @@
 [ext_resource type="PackedScene" uid="uid://dki6m608gegbv" path="res://scenes/obstacles/tree_5.tscn" id="11_3gywq"]
 [ext_resource type="Script" uid="uid://dd0pjr8oxjc3m" path="res://scripts/subtle_wind_pixels.gd" id="12_4k8ly"]
 [ext_resource type="PackedScene" uid="uid://cwed61nbf526l" path="res://scenes/ui.tscn" id="13_sof0w"]
+[ext_resource type="AudioStream" uid="uid://drnirfs0vdqfo" path="res://music/gamejame_song.mp3" id="14_ggavl"]
 
 [node name="Level1" type="Node2D" unique_id=1943586023]
 script = ExtResource("1_itquq")
@@ -40,3 +41,8 @@ z_index = 4095
 script = ExtResource("12_4k8ly")
 
 [node name="UI" parent="." unique_id=977049816 instance=ExtResource("13_sof0w")]
+
+[node name="level_music" type="AudioStreamPlayer" parent="." unique_id=1572466308]
+stream = ExtResource("14_ggavl")
+autoplay = true
+bus = &"music"

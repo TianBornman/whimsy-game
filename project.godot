@@ -25,6 +25,7 @@ mouse_cursor/custom_image="uid://bwqhvdggln6t8"
 [file_customization]
 
 folder_colors={
+"res://music/": "orange",
 "res://scripts/": "pink",
 "res://sounds/": "blue",
 "res://sprites/": "red",
