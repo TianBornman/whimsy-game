@@ -55,7 +55,7 @@ scale = Vector2(0.3, 0.3)
 texture = ExtResource("5_5hph3")
 
 [node name="Shrub7" type="Sprite2D" parent="bg_object_parent" unique_id=488686443]
-position = Vector2(743, 138)
+position = Vector2(655, 184)
 scale = Vector2(0.3, 0.3)
 texture = ExtResource("5_5hph3")
 
