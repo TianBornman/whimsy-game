@@ -1,0 +1,19 @@
+[gd_scene format=3 uid="uid://b7qdwwo3u17n4"]
+
+[ext_resource type="Texture2D" uid="uid://dc37ahuul80gq" path="res://sprites/plants/shrub_3.png" id="1_fpgdy"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_lb6d8"]
+size = Vector2(91.5, 112.25)
+
+[node name="Plant" type="Node2D" unique_id=1622051805]
+
+[node name="sprite" type="Sprite2D" parent="." unique_id=1202615412]
+position = Vector2(4.9999995, -40)
+scale = Vector2(0.35, 0.35)
+texture = ExtResource("1_fpgdy")
+
+[node name="area" type="Area2D" parent="." unique_id=1173312939]
+
+[node name="collider" type="CollisionShape2D" parent="area" unique_id=717592774]
+position = Vector2(5.25, -57)
+shape = SubResource("RectangleShape2D_lb6d8")

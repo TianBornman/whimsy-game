@@ -1,0 +1,25 @@
+[gd_scene format=3 uid="uid://bygvtgmcuw0oi"]
+
+[ext_resource type="Texture2D" uid="uid://bk416fqv17nrf" path="res://sprites/plants/tree_4.png" id="1_66wwk"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_lb6d8"]
+size = Vector2(43.5, 91)
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_oc3ar"]
+radius = 68.007355
+
+[node name="Plant" type="Node2D" unique_id=1622051805]
+
+[node name="sprite" type="Sprite2D" parent="." unique_id=1202615412]
+scale = Vector2(0.35, 0.35)
+texture = ExtResource("1_66wwk")
+
+[node name="area" type="Area2D" parent="." unique_id=1173312939]
+
+[node name="collider" type="CollisionShape2D" parent="area" unique_id=717592774]
+position = Vector2(-3.75, 46)
+shape = SubResource("RectangleShape2D_lb6d8")
+
+[node name="collider2" type="CollisionShape2D" parent="area" unique_id=832919032]
+position = Vector2(-1, -48)
+shape = SubResource("CircleShape2D_oc3ar")
