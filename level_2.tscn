@@ -33,6 +33,7 @@ win_dialogue_stream = ExtResource("4_i558w")
 attack_sound_streams = Array[AudioStream]([ExtResource("3_i558w"), ExtResource("4_cuxq2"), ExtResource("5_wvr33")])
 click_poof_texture = ExtResource("6_sgm4o")
 target_oki_scale_on_paper = 1.0
+target_oki_position_on_paper = Vector2(70, 70)
 background_texture = ExtResource("7_6r3eb")
 background_tint_color = Color(0.594678, 0.31367868, 0.7722632, 1)
 obstacle_scenes = Array[PackedScene]([ExtResource("8_2pufk"), ExtResource("9_btc8u"), ExtResource("10_ikghu"), ExtResource("11_i6smf"), ExtResource("12_d4rhq"), ExtResource("13_ldfcd"), ExtResource("14_41lt0"), ExtResource("15_t8cg7")])

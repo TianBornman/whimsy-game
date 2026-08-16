@@ -1095,6 +1095,8 @@ func _ensure_timer_ui() -> void:
 
 	_shooter_timer_label = _create_timer_label("ShooterTimerLabel", Vector2(16.0, 16.0))
 	_runoff_timer_label = _create_timer_label("RunoffTimerLabel", Vector2(16.0, 48.0))
+	_shooter_timer_label.visible = false
+	_runoff_timer_label.visible = false
 	_timer_layer.add_child(_shooter_timer_label)
 	_timer_layer.add_child(_runoff_timer_label)
 

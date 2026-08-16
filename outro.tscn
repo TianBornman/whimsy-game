@@ -7,5 +7,7 @@
 script = ExtResource("1_outro")
 background_tint_color = Color(0.85427284, 0.4296733, 0.5454566, 1)
 fake_target_scale = 0.25
+target_preview_scale_on_paper = 0.25
+target_preview_position_on_paper = Vector2(70, 70)
 final_face_scale = 1.0
 final_reveal_sound = ExtResource("2_njae7")

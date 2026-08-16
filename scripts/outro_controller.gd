@@ -64,6 +64,15 @@ const DEPTH_Z_INDEX_MAX: int = 4096
 @export var fake_target_hide_after_death_animation: bool = false
 @export var shot_lock_cooldown_seconds: float = 9999.0
 
+@export_category("Target Paper UI")
+@export var target_paper_texture: Texture2D = preload("res://sprites/UI/paper.png")
+@export_range(0.05, 2.0, 0.01) var target_paper_scale: float = 0.28
+@export_range(0.0, 500.0, 1.0, "suffix:px") var target_paper_collapsed_visible_height: float = 42.0
+@export var target_paper_screen_margin: Vector2 = Vector2(16.0, 12.0)
+@export_range(0.01, 2.0, 0.01, "suffix:s") var target_paper_hover_seconds: float = 0.22
+@export_range(0.05, 2.0, 0.01) var target_preview_scale_on_paper: float = 0.16
+@export var target_preview_position_on_paper: Vector2 = Vector2(70.0, 72.0)
+
 @export_category("Obstacles")
 @export var obstacle_count_range: Vector2i = Vector2i(5, 8)
 @export var obstacle_scale_range: Vector2 = Vector2(0.9, 1.1)
@@ -95,6 +104,7 @@ const DEPTH_Z_INDEX_MAX: int = 4096
 @export var final_reveal_sound: AudioStream
 @export_range(-40.0, 12.0, 0.5, "suffix:dB") var final_reveal_sound_volume_db: float = 0.0
 @export var final_reveal_sound_bus: StringName = &"Master"
+@export var credits_scene: PackedScene = preload("res://credits_scene.tscn")
 
 var _background: Sprite2D
 var _sortable_parent: Node2D
@@ -107,6 +117,10 @@ var _final_face_timer: float = 0.0
 var _running_goblins: Array[Node2D] = []
 var _final_backdrop_overlay: ColorRect = null
 var _final_face_layer: CanvasLayer = null
+var _target_paper_layer: CanvasLayer = null
+var _target_paper_drawer: Control = null
+var _target_paper_expanded: bool = false
+var _target_paper_tween: Tween = null
 
 
 func _ready() -> void:
@@ -115,6 +129,7 @@ func _ready() -> void:
 	_create_sortable_parent()
 	_spawn_obstacles()
 	_create_fake_target()
+	_create_target_paper_ui()
 	_create_ui()
 	_create_music_player()
 	_update_all_depths()
@@ -122,6 +137,7 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	_update_running_goblin_walk_squash(delta)
+	_update_target_paper_drawer_position(false)
 
 	if _pending_final_face:
 		_final_face_timer -= delta
@@ -203,6 +219,125 @@ func _create_fake_target_sprite_fallback() -> void:
 	fake_sprite.global_position = _get_viewport_center()
 	_fake_target = fake_sprite
 	_update_depth_z_index(fake_sprite)
+
+
+func _create_target_paper_ui() -> void:
+	if target_paper_texture == null:
+		return
+
+	_target_paper_layer = CanvasLayer.new()
+	_target_paper_layer.name = "OutroTargetPaperLayer"
+	_target_paper_layer.layer = 5
+	add_child(_target_paper_layer)
+
+	_target_paper_drawer = Control.new()
+	_target_paper_drawer.name = "OutroTargetPaperDrawer"
+	_target_paper_drawer.mouse_filter = Control.MOUSE_FILTER_STOP
+	_target_paper_drawer.clip_contents = false
+	_target_paper_drawer.custom_minimum_size = _get_target_paper_display_size()
+	_target_paper_drawer.size = _get_target_paper_display_size()
+	_target_paper_drawer.mouse_entered.connect(_on_target_paper_mouse_entered)
+	_target_paper_drawer.mouse_exited.connect(_on_target_paper_mouse_exited)
+	_target_paper_layer.add_child(_target_paper_drawer)
+
+	var paper: TextureRect = TextureRect.new()
+	paper.name = "TargetPaper"
+	paper.texture = target_paper_texture
+	paper.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	paper.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	paper.stretch_mode = TextureRect.STRETCH_SCALE
+	paper.custom_minimum_size = target_paper_texture.get_size()
+	paper.size = target_paper_texture.get_size()
+	paper.scale = Vector2.ONE * target_paper_scale
+	_target_paper_drawer.add_child(paper)
+
+	var preview: Node2D = _create_fake_target_preview_for_paper()
+	if preview != null:
+		preview.name = "TargetPreview"
+		preview.position = target_preview_position_on_paper
+		preview.scale = Vector2.ONE * target_preview_scale_on_paper
+		_target_paper_drawer.add_child(preview)
+
+	_update_target_paper_drawer_position(false)
+
+
+func _create_fake_target_preview_for_paper() -> Node2D:
+	var preview: Node2D = null
+	if fake_target_scene != null:
+		preview = fake_target_scene.instantiate() as Node2D
+
+	if preview == null:
+		var sprite: Sprite2D = Sprite2D.new()
+		sprite.texture = fake_goblin_texture
+		sprite.centered = true
+		preview = sprite
+
+	_remove_animation_players(preview)
+	_reset_preview_sprite_animation_state(preview)
+	return preview
+
+
+func _remove_animation_players(node: Node) -> void:
+	for child in node.get_children():
+		_remove_animation_players(child)
+
+	var animation_player: AnimationPlayer = node as AnimationPlayer
+	if animation_player != null:
+		animation_player.queue_free()
+
+
+func _reset_preview_sprite_animation_state(node: Node) -> void:
+	var node_2d: Node2D = node as Node2D
+	if node_2d != null:
+		node_2d.position = Vector2.ZERO
+		node_2d.rotation = 0.0
+
+	for child in node.get_children():
+		_reset_preview_sprite_animation_state(child)
+
+
+func _get_target_paper_display_size() -> Vector2:
+	if target_paper_texture == null:
+		return Vector2.ZERO
+	return target_paper_texture.get_size() * target_paper_scale
+
+
+func _update_target_paper_drawer_position(animated: bool) -> void:
+	if !is_instance_valid(_target_paper_drawer):
+		return
+
+	var viewport_size: Vector2 = get_viewport_rect().size
+	var paper_size: Vector2 = _get_target_paper_display_size()
+	_target_paper_drawer.size = paper_size
+	_target_paper_drawer.custom_minimum_size = paper_size
+	var anchored_x: float = viewport_size.x - paper_size.x - target_paper_screen_margin.x
+	var expanded_position: Vector2 = Vector2(
+		anchored_x,
+		viewport_size.y - paper_size.y - target_paper_screen_margin.y
+	)
+	var collapsed_position: Vector2 = Vector2(
+		anchored_x,
+		viewport_size.y - target_paper_collapsed_visible_height
+	)
+	var target_position: Vector2 = expanded_position if _target_paper_expanded else collapsed_position
+
+	if animated:
+		if is_instance_valid(_target_paper_tween):
+			_target_paper_tween.kill()
+		_target_paper_tween = _target_paper_drawer.create_tween()
+		_target_paper_tween.tween_property(_target_paper_drawer, "position", target_position, target_paper_hover_seconds).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	else:
+		_target_paper_drawer.position = target_position
+
+
+func _on_target_paper_mouse_entered() -> void:
+	_target_paper_expanded = true
+	_update_target_paper_drawer_position(true)
+
+
+func _on_target_paper_mouse_exited() -> void:
+	_target_paper_expanded = false
+	_update_target_paper_drawer_position(true)
 
 
 func _create_ui() -> void:
@@ -425,6 +560,7 @@ func _fade_backdrop_to_black() -> void:
 
 func _play_final_reveal_sound() -> void:
 	if final_reveal_sound == null:
+		_go_to_credits()
 		return
 
 	var audio_player: AudioStreamPlayer = AudioStreamPlayer.new()
@@ -433,8 +569,16 @@ func _play_final_reveal_sound() -> void:
 	audio_player.volume_db = final_reveal_sound_volume_db
 	audio_player.bus = final_reveal_sound_bus
 	audio_player.finished.connect(audio_player.queue_free)
+	audio_player.finished.connect(_go_to_credits)
 	add_child(audio_player)
 	audio_player.play()
+
+
+func _go_to_credits() -> void:
+	if credits_scene == null:
+		return
+
+	get_tree().change_scene_to_packed(credits_scene)
 
 
 func _play_click_feedback(click_position: Vector2) -> void:
