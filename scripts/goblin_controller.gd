@@ -28,6 +28,7 @@ const RESOLUTION_CHOICE_SPACING: float = 120.0
 const RESOLUTION_CHOICE_OFFSCREEN_PADDING: float = 220.0
 const RESOLUTION_CHOICE_WALK_SPEED: float = 320.0
 const RESOLUTION_AUTO_CONFIRM_SECONDS: float = 5.0
+const FAIL_AUTO_RESTART_SECONDS: float = 5.0
 const HITBOX_POINT_QUERY_MAX_RESULTS: int = 64
 const DEFAULT_GOBLIN_SCENE_PATH: String = "res://goblin.tscn"
 const DEPTH_Z_INDEX_MIN: int = -4096
@@ -155,6 +156,7 @@ static var _last_dead_goblin = null
 static var _resolution_choices_pending: bool = false
 static var _resolution_choices_spawned: bool = false
 static var _resolution_auto_confirm_at_msec: int = 0
+static var _fail_auto_restart_at_msec: int = 0
 
 
 func _ready() -> void:
@@ -175,6 +177,7 @@ func _ready() -> void:
 		_resolution_choices_pending = false
 		_resolution_choices_spawned = false
 		_resolution_auto_confirm_at_msec = 0
+		_fail_auto_restart_at_msec = 0
 
 	if !_active_goblins.has(self):
 		_active_goblins.append(self)
@@ -360,6 +363,7 @@ func _process(delta: float) -> void:
 		if _resolution_choices_pending:
 			_try_spawn_resolution_choices_after_scatter()
 		_update_resolution_auto_confirm()
+		_update_fail_auto_restart()
 
 	var frame_start_position: Vector2 = global_position
 	_state_timer -= delta
@@ -653,11 +657,19 @@ func _fail_level() -> void:
 	if _level_resolved:
 		return
 
+	var no_goblins_were_killed: bool = !_has_any_dead_normal_goblin()
 	_level_resolved = true
 	_level_was_won = false
 	_click_cooldown_until_msec = 0
 	_update_timer_ui()
 	_show_level_result_message(_get_fail_message(), false)
+
+	if no_goblins_were_killed:
+		_schedule_fail_auto_restart()
+		_force_spawn_resolution_choices()
+		_send_living_goblins_offscreen()
+		return
+
 	_queue_resolution_choices_after_scatter()
 	_send_living_goblins_offscreen()
 
@@ -1000,6 +1012,50 @@ func _get_resolution_choice_anchor_position() -> Vector2:
 	return screen_bounds.position + screen_bounds.size * 0.5
 
 
+func _force_spawn_resolution_choices() -> void:
+	if _resolution_choices_spawned:
+		return
+
+	_resolution_choices_pending = false
+	_spawn_resolution_choices()
+
+
+func _schedule_fail_auto_restart() -> void:
+	_fail_auto_restart_at_msec = Time.get_ticks_msec() + int(FAIL_AUTO_RESTART_SECONDS * 1000.0)
+	var tree: SceneTree = get_tree()
+	if tree != null:
+		var timer: SceneTreeTimer = tree.create_timer(FAIL_AUTO_RESTART_SECONDS)
+		timer.timeout.connect(_on_fail_auto_restart_timeout)
+
+
+func _on_fail_auto_restart_timeout() -> void:
+	if _fail_auto_restart_at_msec <= 0:
+		return
+
+	_fail_auto_restart_at_msec = 0
+	_handle_positive_resolution_choice()
+
+
+func _update_fail_auto_restart() -> void:
+	if _fail_auto_restart_at_msec <= 0:
+		return
+
+	if Time.get_ticks_msec() >= _fail_auto_restart_at_msec:
+		_fail_auto_restart_at_msec = 0
+		_handle_positive_resolution_choice()
+
+
+func _has_any_dead_normal_goblin() -> bool:
+	for goblin in _active_goblins:
+		if !is_instance_valid(goblin) or goblin._is_resolution_choice():
+			continue
+
+		if goblin._is_dead:
+			return true
+
+	return false
+
+
 func _update_resolution_auto_confirm() -> void:
 	if !_resolution_choices_spawned:
 		return
@@ -1050,6 +1106,7 @@ func _handle_resolution_choice_click(click_position: Vector2) -> void:
 
 func _handle_positive_resolution_choice() -> void:
 	_resolution_auto_confirm_at_msec = 0
+	_fail_auto_restart_at_msec = 0
 	var level_handler: Node = _get_level_handler()
 	if level_handler != null and level_handler.has_method("handle_positive_resolution_choice"):
 		level_handler.call("handle_positive_resolution_choice", _level_was_won)
