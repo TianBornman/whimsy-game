@@ -5,6 +5,7 @@
 [ext_resource type="AudioStream" uid="uid://pe3c8ydtb1nq" path="res://sounds/attack_sounds/attack_sound_1.mp3" id="3_i558w"]
 [ext_resource type="AudioStream" uid="uid://dhjfvj7n6b2w4" path="res://sounds/attack_sounds/attack_sound_2.mp3" id="4_cuxq2"]
 [ext_resource type="AudioStream" uid="uid://dyy584mrauqju" path="res://sounds/level_quips/tasty.mp3" id="4_i558w"]
+[ext_resource type="AudioStream" uid="uid://bkbmuq2cnya22" path="res://sounds/level_quips/sad_green.mp3" id="5_cuxq2"]
 [ext_resource type="AudioStream" uid="uid://gwaknkhkk8ed" path="res://sounds/attack_sounds/attack_sound_3.mp3" id="5_wvr33"]
 [ext_resource type="Texture2D" uid="uid://bmlvc20a4sty0" path="res://sprites/particle_fx_texture.png" id="6_sgm4o"]
 [ext_resource type="Texture2D" uid="uid://imqbqtn2mp8j" path="res://sprites/background_floor.png" id="7_6r3eb"]
@@ -28,8 +29,10 @@ goblin_count = 20
 shot_cooldown_seconds = 3.0
 panic_duration_seconds = 15.0
 win_message = "Looks so comfy"
+fail_message = "The gubby :("
 next_level_scene = ExtResource("19_next")
 win_dialogue_stream = ExtResource("4_i558w")
+fail_dialogue_stream = ExtResource("5_cuxq2")
 attack_sound_streams = Array[AudioStream]([ExtResource("3_i558w"), ExtResource("4_cuxq2"), ExtResource("5_wvr33")])
 click_poof_texture = ExtResource("6_sgm4o")
 target_oki_scale_on_paper = 1.0

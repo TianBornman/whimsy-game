@@ -1,0 +1,65 @@
+[gd_scene format=3 uid="uid://jiyqopr8jvmc"]
+
+[ext_resource type="Script" uid="uid://iairaulkov3" path="res://scripts/level_goblin_spawner.gd" id="1_i4yqx"]
+[ext_resource type="PackedScene" uid="uid://dxkfs2i5mh2bm" path="res://goblin.tscn" id="2_j0u7p"]
+[ext_resource type="PackedScene" uid="uid://ch7wlksmd7sdl" path="res://level_5.tscn" id="3_at3ad"]
+[ext_resource type="AudioStream" uid="uid://bo463l2c6qr1w" path="res://sounds/level_quips/comfy_warm.mp3" id="4_at3ad"]
+[ext_resource type="AudioStream" uid="uid://pe3c8ydtb1nq" path="res://sounds/attack_sounds/attack_sound_1.mp3" id="4_pkey3"]
+[ext_resource type="AudioStream" uid="uid://cn0a3di2ao8ja" path="res://sounds/level_quips/pain.mp3" id="5_pkey3"]
+[ext_resource type="AudioStream" uid="uid://dhjfvj7n6b2w4" path="res://sounds/attack_sounds/attack_sound_2.mp3" id="5_s4mws"]
+[ext_resource type="AudioStream" uid="uid://gwaknkhkk8ed" path="res://sounds/attack_sounds/attack_sound_3.mp3" id="6_1umnx"]
+[ext_resource type="Texture2D" uid="uid://bmlvc20a4sty0" path="res://sprites/particle_fx_texture.png" id="7_3o8go"]
+[ext_resource type="Texture2D" uid="uid://imqbqtn2mp8j" path="res://sprites/background_floor.png" id="8_6d0cq"]
+[ext_resource type="PackedScene" uid="uid://cgh4dhn1bejuc" path="res://scenes/obstacles/shrub_1.tscn" id="9_4r1ct"]
+[ext_resource type="PackedScene" uid="uid://b7qdwwo3u17n4" path="res://scenes/obstacles/shrub_2.tscn" id="10_hu802"]
+[ext_resource type="PackedScene" uid="uid://yvdlwf7vhyys" path="res://scenes/obstacles/shrub_3.tscn" id="11_nogox"]
+[ext_resource type="PackedScene" uid="uid://dvy36r37tmoej" path="res://scenes/obstacles/tree_1.tscn" id="12_vmpu5"]
+[ext_resource type="PackedScene" uid="uid://c544r3esklqbb" path="res://scenes/obstacles/tree_2.tscn" id="13_d4r1o"]
+[ext_resource type="PackedScene" uid="uid://b173biehighpa" path="res://scenes/obstacles/tree_3.tscn" id="14_lypob"]
+[ext_resource type="PackedScene" uid="uid://bygvtgmcuw0oi" path="res://scenes/obstacles/tree_4.tscn" id="15_ywdb0"]
+[ext_resource type="PackedScene" uid="uid://dki6m608gegbv" path="res://scenes/obstacles/tree_5.tscn" id="16_p7cwt"]
+[ext_resource type="Script" uid="uid://dd0pjr8oxjc3m" path="res://scripts/subtle_wind_pixels.gd" id="17_rprjf"]
+[ext_resource type="PackedScene" uid="uid://cwed61nbf526l" path="res://scenes/ui.tscn" id="18_beulo"]
+[ext_resource type="AudioStream" uid="uid://drnirfs0vdqfo" path="res://music/gamejame_song.mp3" id="19_v6tvd"]
+
+[node name="Level" type="Node2D" unique_id=1943586023]
+script = ExtResource("1_i4yqx")
+goblin_scene = ExtResource("2_j0u7p")
+goblin_count = 20
+target_count = 2
+shot_cooldown_seconds = 3.0
+panic_duration_seconds = 7.1
+win_message = "The perfect shade!"
+fail_message = "The perfect tint"
+next_level_scene = ExtResource("3_at3ad")
+win_dialogue_stream = ExtResource("4_at3ad")
+fail_dialogue_stream = ExtResource("5_pkey3")
+attack_sound_streams = Array[AudioStream]([ExtResource("4_pkey3"), ExtResource("5_s4mws"), ExtResource("6_1umnx")])
+click_poof_texture = ExtResource("7_3o8go")
+target_oki_scale_on_paper = 1.0
+target_oki_position_on_paper = Vector2(70, 70)
+background_texture = ExtResource("8_6d0cq")
+background_tint_color = Color(0.3794625, 0.3543275, 0.33047697, 1)
+obstacle_scenes = Array[PackedScene]([ExtResource("9_4r1ct"), ExtResource("10_hu802"), ExtResource("11_nogox"), ExtResource("12_vmpu5"), ExtResource("13_d4r1o"), ExtResource("14_lypob"), ExtResource("15_ywdb0"), ExtResource("16_p7cwt")])
+
+[node name="BackgroundFloor" type="Sprite2D" parent="." unique_id=2094671606]
+position = Vector2(581.87506, 331)
+scale = Vector2(0.3330714, 0.325)
+texture = ExtResource("8_6d0cq")
+
+[node name="camera" type="Camera2D" parent="." unique_id=1507845177]
+position = Vector2(586, 335)
+
+[node name="bg_object_parent" type="Node2D" parent="." unique_id=1161363108]
+y_sort_enabled = true
+
+[node name="WindPixels" type="Node2D" parent="." unique_id=1041732162]
+z_index = 4095
+script = ExtResource("17_rprjf")
+
+[node name="UI" parent="." unique_id=977049816 instance=ExtResource("18_beulo")]
+
+[node name="level_music" type="AudioStreamPlayer" parent="." unique_id=1572466308]
+stream = ExtResource("19_v6tvd")
+autoplay = true
+bus = &"Music"

@@ -1,0 +1,66 @@
+[gd_scene format=3 uid="uid://ch7wlksmd7sdl"]
+
+[ext_resource type="Script" uid="uid://iairaulkov3" path="res://scripts/level_goblin_spawner.gd" id="1_oa4pn"]
+[ext_resource type="PackedScene" uid="uid://dxkfs2i5mh2bm" path="res://goblin.tscn" id="2_spb6k"]
+[ext_resource type="PackedScene" uid="uid://dy8jtlb7jq7eg" path="res://outro.tscn" id="3_ad8pm"]
+[ext_resource type="AudioStream" uid="uid://bulbnn3kmhmny" path="res://sounds/level_quips/oh_the_green.mp3" id="4_ad8pm"]
+[ext_resource type="AudioStream" uid="uid://pe3c8ydtb1nq" path="res://sounds/attack_sounds/attack_sound_1.mp3" id="4_q0h4m"]
+[ext_resource type="AudioStream" uid="uid://cn0a3di2ao8ja" path="res://sounds/level_quips/pain.mp3" id="5_q0h4m"]
+[ext_resource type="AudioStream" uid="uid://dhjfvj7n6b2w4" path="res://sounds/attack_sounds/attack_sound_2.mp3" id="5_w3lgi"]
+[ext_resource type="AudioStream" uid="uid://gwaknkhkk8ed" path="res://sounds/attack_sounds/attack_sound_3.mp3" id="6_jegxy"]
+[ext_resource type="Texture2D" uid="uid://bmlvc20a4sty0" path="res://sprites/particle_fx_texture.png" id="7_1bbjl"]
+[ext_resource type="Texture2D" uid="uid://imqbqtn2mp8j" path="res://sprites/background_floor.png" id="8_su4cu"]
+[ext_resource type="PackedScene" uid="uid://cgh4dhn1bejuc" path="res://scenes/obstacles/shrub_1.tscn" id="9_7se5y"]
+[ext_resource type="PackedScene" uid="uid://b7qdwwo3u17n4" path="res://scenes/obstacles/shrub_2.tscn" id="10_jrtt6"]
+[ext_resource type="PackedScene" uid="uid://yvdlwf7vhyys" path="res://scenes/obstacles/shrub_3.tscn" id="11_tnvhp"]
+[ext_resource type="PackedScene" uid="uid://dvy36r37tmoej" path="res://scenes/obstacles/tree_1.tscn" id="12_pay3o"]
+[ext_resource type="PackedScene" uid="uid://c544r3esklqbb" path="res://scenes/obstacles/tree_2.tscn" id="13_0aj8w"]
+[ext_resource type="PackedScene" uid="uid://b173biehighpa" path="res://scenes/obstacles/tree_3.tscn" id="14_6k2cs"]
+[ext_resource type="PackedScene" uid="uid://bygvtgmcuw0oi" path="res://scenes/obstacles/tree_4.tscn" id="15_v06kn"]
+[ext_resource type="PackedScene" uid="uid://dki6m608gegbv" path="res://scenes/obstacles/tree_5.tscn" id="16_e85tf"]
+[ext_resource type="Script" uid="uid://dd0pjr8oxjc3m" path="res://scripts/subtle_wind_pixels.gd" id="17_5d2jl"]
+[ext_resource type="PackedScene" uid="uid://cwed61nbf526l" path="res://scenes/ui.tscn" id="18_gssvh"]
+[ext_resource type="AudioStream" uid="uid://drnirfs0vdqfo" path="res://music/gamejame_song.mp3" id="19_hbtd8"]
+
+[node name="Level" type="Node2D" unique_id=1943586023]
+script = ExtResource("1_oa4pn")
+goblin_scene = ExtResource("2_spb6k")
+goblin_count = 25
+target_count = 5
+shot_cooldown_seconds = 0.0
+panic_duration_seconds = 15.0
+wrong_kill_runoff_penalty_seconds = 0.0
+win_message = "Almost There"
+fail_message = "Almost here"
+next_level_scene = ExtResource("3_ad8pm")
+win_dialogue_stream = ExtResource("4_ad8pm")
+fail_dialogue_stream = ExtResource("5_q0h4m")
+attack_sound_streams = Array[AudioStream]([ExtResource("4_q0h4m"), ExtResource("5_w3lgi"), ExtResource("6_jegxy")])
+click_poof_texture = ExtResource("7_1bbjl")
+target_oki_scale_on_paper = 1.0
+target_oki_position_on_paper = Vector2(70, 70)
+background_texture = ExtResource("8_su4cu")
+background_tint_color = Color(0.16233915, 0.492729, 0.4429278, 1)
+obstacle_scenes = Array[PackedScene]([ExtResource("9_7se5y"), ExtResource("10_jrtt6"), ExtResource("11_tnvhp"), ExtResource("12_pay3o"), ExtResource("13_0aj8w"), ExtResource("14_6k2cs"), ExtResource("15_v06kn"), ExtResource("16_e85tf")])
+
+[node name="BackgroundFloor" type="Sprite2D" parent="." unique_id=2094671606]
+position = Vector2(581.87506, 331)
+scale = Vector2(0.3330714, 0.325)
+texture = ExtResource("8_su4cu")
+
+[node name="camera" type="Camera2D" parent="." unique_id=1507845177]
+position = Vector2(586, 335)
+
+[node name="bg_object_parent" type="Node2D" parent="." unique_id=1161363108]
+y_sort_enabled = true
+
+[node name="WindPixels" type="Node2D" parent="." unique_id=1041732162]
+z_index = 4095
+script = ExtResource("17_5d2jl")
+
+[node name="UI" parent="." unique_id=977049816 instance=ExtResource("18_gssvh")]
+
+[node name="level_music" type="AudioStreamPlayer" parent="." unique_id=1572466308]
+stream = ExtResource("19_hbtd8")
+autoplay = true
+bus = &"Music"

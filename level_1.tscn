@@ -6,6 +6,7 @@
 [ext_resource type="AudioStream" uid="uid://u0gm6nxc6fhb" path="res://sounds/level_quips/i_love_you.mp3" id="4_3qmij"]
 [ext_resource type="PackedScene" uid="uid://cgh4dhn1bejuc" path="res://scenes/obstacles/shrub_1.tscn" id="4_rka8t"]
 [ext_resource type="PackedScene" uid="uid://b7qdwwo3u17n4" path="res://scenes/obstacles/shrub_2.tscn" id="5_5hph3"]
+[ext_resource type="AudioStream" uid="uid://cn0a3di2ao8ja" path="res://sounds/level_quips/pain.mp3" id="5_kb5eu"]
 [ext_resource type="PackedScene" uid="uid://yvdlwf7vhyys" path="res://scenes/obstacles/shrub_3.tscn" id="6_m6f3s"]
 [ext_resource type="PackedScene" uid="uid://dvy36r37tmoej" path="res://scenes/obstacles/tree_1.tscn" id="7_j7kpp"]
 [ext_resource type="PackedScene" uid="uid://c544r3esklqbb" path="res://scenes/obstacles/tree_2.tscn" id="8_apdrj"]
@@ -27,8 +28,10 @@ goblin_scene = ExtResource("2_3hls8")
 shot_cooldown_seconds = 3.0
 panic_duration_seconds = 15.0
 win_message = "Yummy"
+fail_message = "Need the warmth"
 next_level_scene = ExtResource("17_next")
 win_dialogue_stream = ExtResource("4_3qmij")
+fail_dialogue_stream = ExtResource("5_kb5eu")
 attack_sound_streams = Array[AudioStream]([ExtResource("13_attack1"), ExtResource("14_attack2"), ExtResource("15_attack3")])
 click_poof_texture = ExtResource("16_poof")
 target_oki_scale_on_paper = 1.0

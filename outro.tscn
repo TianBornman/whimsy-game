@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://dy8jtlb7jq7eg"]
 
 [ext_resource type="Script" uid="uid://xqk7d087760k" path="res://scripts/outro_controller.gd" id="1_outro"]
-[ext_resource type="AudioStream" uid="uid://bcot0l3one3m4" path="res://sounds/dialogue_pitched,mp3.mp3" id="2_njae7"]
+[ext_resource type="AudioStream" uid="uid://cgw11gucmtqp2" path="res://sounds/Outro Combined.mp3" id="2_njae7"]
 
 [node name="Outro" type="Node2D" unique_id=291770413]
 script = ExtResource("1_outro")
