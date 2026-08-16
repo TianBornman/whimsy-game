@@ -1,9 +1,11 @@
 [gd_scene format=3 uid="uid://dy8jtlb7jq7eg"]
 
 [ext_resource type="Script" uid="uid://xqk7d087760k" path="res://scripts/outro_controller.gd" id="1_outro"]
+[ext_resource type="AudioStream" uid="uid://bcot0l3one3m4" path="res://sounds/dialogue_pitched,mp3.mp3" id="2_njae7"]
 
 [node name="Outro" type="Node2D" unique_id=291770413]
 script = ExtResource("1_outro")
 background_tint_color = Color(0.85427284, 0.4296733, 0.5454566, 1)
 fake_target_scale = 0.25
 final_face_scale = 1.0
+final_reveal_sound = ExtResource("2_njae7")

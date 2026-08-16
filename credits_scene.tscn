@@ -1,0 +1,144 @@
+[gd_scene format=3 uid="uid://fxqwrqga50y6"]
+
+[ext_resource type="Texture2D" uid="uid://bognyitajbvkd" path="res://credits.png" id="1_buoty"]
+[ext_resource type="Texture2D" uid="uid://fn25llb7u5kl" path="res://sprites/faces/goblin_face_1.png" id="2_5m1cm"]
+[ext_resource type="Texture2D" uid="uid://cf5ukxc67qg1s" path="res://sprites/faces/goblin_face_2.png" id="3_3uxir"]
+[ext_resource type="Texture2D" uid="uid://dxy1s8bvb2lao" path="res://sprites/faces/goblin_face_3.png" id="4_tthvq"]
+[ext_resource type="Texture2D" uid="uid://c14mheh3lo41r" path="res://sprites/faces/goblin_face_4.png" id="5_idnep"]
+[ext_resource type="Texture2D" uid="uid://dcd46ipowttwg" path="res://sprites/faces/goblin_face_5.png" id="6_x4att"]
+
+[sub_resource type="Animation" id="Animation_tthvq"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Camera2D:rotation")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [0.0]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("credits:rotation")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [0.0]
+}
+
+[sub_resource type="Animation" id="Animation_3uxir"]
+resource_name = "new_animation"
+length = 2.0
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("credits:rotation")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.5, 1, 1.5333333, 2),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 0,
+"values": [0.0, 0.08726646, 0.0, -0.08726646259971647, 0.0]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_tthvq"]
+_data = {
+&"RESET": SubResource("Animation_tthvq"),
+&"new_animation": SubResource("Animation_3uxir")
+}
+
+[node name="Control" type="CanvasLayer" unique_id=1847768758]
+
+[node name="anim" type="AnimationPlayer" parent="." unique_id=1167275120]
+libraries/ = SubResource("AnimationLibrary_tthvq")
+autoplay = &"new_animation"
+
+[node name="credits" type="TextureRect" parent="." unique_id=991779973]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -250.0
+offset_top = -350.0
+offset_right = 250.0
+offset_bottom = 350.0
+grow_horizontal = 2
+grow_vertical = 2
+pivot_offset = Vector2(251, 359)
+texture = ExtResource("1_buoty")
+expand_mode = 4
+
+[node name="Camera2D" type="Camera2D" parent="." unique_id=68701508]
+
+[node name="faces" type="Node2D" parent="." unique_id=1148167172]
+
+[node name="GoblinFace1" type="Sprite2D" parent="faces" unique_id=1203234339]
+position = Vector2(155, 169)
+texture = ExtResource("2_5m1cm")
+
+[node name="GoblinFace2" type="Sprite2D" parent="faces" unique_id=302031726]
+position = Vector2(198, 424)
+texture = ExtResource("3_3uxir")
+
+[node name="GoblinFace3" type="Sprite2D" parent="faces" unique_id=2134235811]
+position = Vector2(159, 618)
+texture = ExtResource("4_tthvq")
+
+[node name="GoblinFace4" type="Sprite2D" parent="faces" unique_id=1772278789]
+position = Vector2(950, 148)
+texture = ExtResource("5_idnep")
+
+[node name="GoblinFace5" type="Sprite2D" parent="faces" unique_id=1893969316]
+position = Vector2(963, 361)
+texture = ExtResource("6_x4att")
+
+[node name="GoblinFace6" type="Sprite2D" parent="faces" unique_id=420384592]
+position = Vector2(975, 598)
+texture = ExtResource("4_tthvq")
+
+[node name="GoblinFace7" type="Sprite2D" parent="faces" unique_id=53729707]
+position = Vector2(76, 293)
+texture = ExtResource("5_idnep")
+
+[node name="GoblinFace8" type="Sprite2D" parent="faces" unique_id=174494288]
+position = Vector2(265, 507)
+texture = ExtResource("4_tthvq")
+
+[node name="GoblinFace9" type="Sprite2D" parent="faces" unique_id=721133120]
+position = Vector2(16, 460)
+texture = ExtResource("2_5m1cm")
+
+[node name="GoblinFace10" type="Sprite2D" parent="faces" unique_id=2064276589]
+position = Vector2(246, 266)
+texture = ExtResource("3_3uxir")
+
+[node name="GoblinFace11" type="Sprite2D" parent="faces" unique_id=1068867264]
+position = Vector2(895, 466)
+texture = ExtResource("5_idnep")
+
+[node name="GoblinFace12" type="Sprite2D" parent="faces" unique_id=889723198]
+position = Vector2(1074, 462)
+texture = ExtResource("6_x4att")
+
+[node name="GoblinFace13" type="Sprite2D" parent="faces" unique_id=1314677166]
+position = Vector2(926, 261)
+texture = ExtResource("4_tthvq")
+
+[node name="GoblinFace14" type="Sprite2D" parent="faces" unique_id=145738610]
+position = Vector2(1097, 273)
+texture = ExtResource("3_3uxir")
+
+[node name="GoblinFace15" type="Sprite2D" parent="faces" unique_id=285485669]
+position = Vector2(1097, 103)
+texture = ExtResource("6_x4att")

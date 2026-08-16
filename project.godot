@@ -53,4 +53,4 @@ left_click={
 rendering_device/driver.windows="d3d12"
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
-environment/defaults/default_clear_color=Color(0, 0.36514112, 0.20643994, 1)
+environment/defaults/default_clear_color=Color(6.3773246e-07, 0.37085372, 0.1141106, 1)
