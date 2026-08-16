@@ -3,6 +3,7 @@
 [ext_resource type="Script" uid="uid://iairaulkov3" path="res://scripts/level_goblin_spawner.gd" id="1_m8gss"]
 [ext_resource type="PackedScene" uid="uid://dxkfs2i5mh2bm" path="res://goblin.tscn" id="2_wnq0t"]
 [ext_resource type="AudioStream" uid="uid://pe3c8ydtb1nq" path="res://sounds/attack_sounds/attack_sound_1.mp3" id="3_ra6nl"]
+[ext_resource type="PackedScene" uid="uid://dy8jtlb7jq7eg" path="res://outro.tscn" id="3_wnq0t"]
 [ext_resource type="AudioStream" uid="uid://dhjfvj7n6b2w4" path="res://sounds/attack_sounds/attack_sound_2.mp3" id="4_gxey3"]
 [ext_resource type="AudioStream" uid="uid://gwaknkhkk8ed" path="res://sounds/attack_sounds/attack_sound_3.mp3" id="5_4hpui"]
 [ext_resource type="Texture2D" uid="uid://bmlvc20a4sty0" path="res://sprites/particle_fx_texture.png" id="6_g005c"]
@@ -26,6 +27,7 @@ goblin_count = 20
 target_count = 2
 shot_cooldown_seconds = 3.0
 panic_duration_seconds = 15.0
+next_level_scene = ExtResource("3_wnq0t")
 attack_sound_streams = Array[AudioStream]([ExtResource("3_ra6nl"), ExtResource("4_gxey3"), ExtResource("5_4hpui")])
 click_poof_texture = ExtResource("6_g005c")
 background_texture = ExtResource("7_dhf26")

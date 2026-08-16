@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cwmc8o5h16vjq"
-path="res://.godot/imported/fake_goblin.png-4ff9d2b1f68679e57edb5940b66751d2.ctex"
+uid="uid://bcsmxf5wgie10"
+path="res://.godot/imported/fake_goblin-head.png-d8b78ac8c07cb90f1ab800441214fd33.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://sprites/fake_goblin.png"
-dest_files=["res://.godot/imported/fake_goblin.png-4ff9d2b1f68679e57edb5940b66751d2.ctex"]
+source_file="res://sprites/outro/fake_goblin-head.png"
+dest_files=["res://.godot/imported/fake_goblin-head.png-d8b78ac8c07cb90f1ab800441214fd33.ctex"]
 
 [params]
 
