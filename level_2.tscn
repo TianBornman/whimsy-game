@@ -1,0 +1,60 @@
+[gd_scene format=3 uid="uid://cpww23wla4ghp"]
+
+[ext_resource type="Script" uid="uid://iairaulkov3" path="res://scripts/level_goblin_spawner.gd" id="1_jcnlr"]
+[ext_resource type="PackedScene" uid="uid://dxkfs2i5mh2bm" path="res://goblin.tscn" id="2_5kfcu"]
+[ext_resource type="AudioStream" uid="uid://pe3c8ydtb1nq" path="res://sounds/attack_sounds/attack_sound_1.mp3" id="3_i558w"]
+[ext_resource type="AudioStream" uid="uid://dhjfvj7n6b2w4" path="res://sounds/attack_sounds/attack_sound_2.mp3" id="4_cuxq2"]
+[ext_resource type="AudioStream" uid="uid://dyy584mrauqju" path="res://sounds/level_quips/tasty.mp3" id="4_i558w"]
+[ext_resource type="AudioStream" uid="uid://gwaknkhkk8ed" path="res://sounds/attack_sounds/attack_sound_3.mp3" id="5_wvr33"]
+[ext_resource type="Texture2D" uid="uid://bmlvc20a4sty0" path="res://sprites/particle_fx_texture.png" id="6_sgm4o"]
+[ext_resource type="Texture2D" uid="uid://imqbqtn2mp8j" path="res://sprites/background_floor.png" id="7_6r3eb"]
+[ext_resource type="PackedScene" uid="uid://cgh4dhn1bejuc" path="res://scenes/obstacles/shrub_1.tscn" id="8_2pufk"]
+[ext_resource type="PackedScene" uid="uid://b7qdwwo3u17n4" path="res://scenes/obstacles/shrub_2.tscn" id="9_btc8u"]
+[ext_resource type="PackedScene" uid="uid://yvdlwf7vhyys" path="res://scenes/obstacles/shrub_3.tscn" id="10_ikghu"]
+[ext_resource type="PackedScene" uid="uid://dvy36r37tmoej" path="res://scenes/obstacles/tree_1.tscn" id="11_i6smf"]
+[ext_resource type="PackedScene" uid="uid://c544r3esklqbb" path="res://scenes/obstacles/tree_2.tscn" id="12_d4rhq"]
+[ext_resource type="PackedScene" uid="uid://b173biehighpa" path="res://scenes/obstacles/tree_3.tscn" id="13_ldfcd"]
+[ext_resource type="PackedScene" uid="uid://bygvtgmcuw0oi" path="res://scenes/obstacles/tree_4.tscn" id="14_41lt0"]
+[ext_resource type="PackedScene" uid="uid://dki6m608gegbv" path="res://scenes/obstacles/tree_5.tscn" id="15_t8cg7"]
+[ext_resource type="Script" uid="uid://dd0pjr8oxjc3m" path="res://scripts/subtle_wind_pixels.gd" id="16_o5ykh"]
+[ext_resource type="PackedScene" uid="uid://cwed61nbf526l" path="res://scenes/ui.tscn" id="17_e6ygx"]
+[ext_resource type="AudioStream" uid="uid://drnirfs0vdqfo" path="res://music/gamejame_song.mp3" id="18_xlxjt"]
+[ext_resource type="PackedScene" uid="uid://i87dxgxet6iv" path="res://level_3.tscn" id="19_next"]
+
+[node name="Level" type="Node2D" unique_id=1943586023]
+script = ExtResource("1_jcnlr")
+goblin_scene = ExtResource("2_5kfcu")
+goblin_count = 20
+shot_cooldown_seconds = 3.0
+panic_duration_seconds = 15.0
+win_message = "Looks so comfy"
+next_level_scene = ExtResource("19_next")
+win_dialogue_stream = ExtResource("4_i558w")
+attack_sound_streams = Array[AudioStream]([ExtResource("3_i558w"), ExtResource("4_cuxq2"), ExtResource("5_wvr33")])
+click_poof_texture = ExtResource("6_sgm4o")
+target_oki_scale_on_paper = 1.0
+background_texture = ExtResource("7_6r3eb")
+background_tint_color = Color(0.594678, 0.31367868, 0.7722632, 1)
+obstacle_scenes = Array[PackedScene]([ExtResource("8_2pufk"), ExtResource("9_btc8u"), ExtResource("10_ikghu"), ExtResource("11_i6smf"), ExtResource("12_d4rhq"), ExtResource("13_ldfcd"), ExtResource("14_41lt0"), ExtResource("15_t8cg7")])
+
+[node name="BackgroundFloor" type="Sprite2D" parent="." unique_id=2094671606]
+position = Vector2(581.87506, 331)
+scale = Vector2(0.3330714, 0.325)
+texture = ExtResource("7_6r3eb")
+
+[node name="camera" type="Camera2D" parent="." unique_id=1507845177]
+position = Vector2(586, 335)
+
+[node name="bg_object_parent" type="Node2D" parent="." unique_id=1161363108]
+y_sort_enabled = true
+
+[node name="WindPixels" type="Node2D" parent="." unique_id=1041732162]
+z_index = 4095
+script = ExtResource("16_o5ykh")
+
+[node name="UI" parent="." unique_id=977049816 instance=ExtResource("17_e6ygx")]
+
+[node name="level_music" type="AudioStreamPlayer" parent="." unique_id=1572466308]
+stream = ExtResource("18_xlxjt")
+autoplay = true
+bus = &"Music"

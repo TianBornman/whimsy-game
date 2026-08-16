@@ -58,14 +58,6 @@ const OBSTACLE_CLICK_BLOCKER_AREA_GROUP: String = "obstacle_click_blocker_area"
 ## Make this goblin the level target. The target keeps its randomized body
 ## color/face, and a matching portrait is shown under the timers.
 @export var is_target: bool = false
-@export var win_message: String = "YOU WIN!"
-
-## Level timing. The level spawner can override these per level.
-@export_range(0.0, 30.0, 0.1, "suffix:s") var shot_cooldown_seconds: float = 5.0
-@export_range(0.1, 60.0, 0.1, "suffix:s") var panic_duration_seconds: float = 10.0
-@export_range(0.1, 20.0, 0.1, "suffix:s") var win_runoff_seconds: float = 3.0
-@export_range(0.0, 20.0, 0.1, "suffix:s") var wrong_kill_runoff_penalty_seconds: float = 2.0
-
 ## Clicks are detected through this Area2D, not from the Sprite2D texture
 ## rectangle. Resize its CollisionShape2D in the scene to tune the hitbox.
 @export var hitbox_path: NodePath = NodePath("Hitbox")
@@ -85,21 +77,6 @@ const OBSTACLE_CLICK_BLOCKER_AREA_GROUP: String = "obstacle_click_blocker_area"
 ## Optional death sounds. One random stream plays when this goblin dies.
 @export var death_sound_streams: Array[AudioStream] = []
 @export_range(-40.0, 12.0, 0.5, "suffix:dB") var death_sound_volume_db: float = 0.0
-
-## Optional attack/click sounds. One random stream plays on every click.
-@export var attack_sound_streams: Array[AudioStream] = []
-@export_range(-40.0, 12.0, 0.5, "suffix:dB") var attack_sound_volume_db: float = 0.0
-@export var attack_sound_bus: StringName = &"AttackClick"
-
-## Optional poof effect on every click. Uses small sprite particles so it
-## works without needing a prebuilt particle scene.
-@export var click_poof_texture: Texture2D
-@export_range(1, 32, 1) var click_poof_particle_count: int = 12
-@export var click_poof_lifetime: float = 0.45
-@export var click_poof_radius: float = 48.0
-@export var click_poof_start_scale_range: Vector2 = Vector2(0.07, 0.13)
-@export var click_poof_end_scale_multiplier: float = 1.35
-@export var click_poof_color: Color = Color(1.0, 1.0, 1.0, 0.9)
 
 ## Optional hat randomization. Fill hat_textures with every hat image this
 ## goblin can use. Add a blank/transparent texture here if "no hat" should
@@ -166,16 +143,13 @@ static var _active_goblins: Array = []
 static var _click_cooldown_until_msec: int = 0
 static var _panic_ends_at_msec: int = 0
 static var _level_resolved: bool = false
+static var _level_was_won: bool = false
 static var _last_click_handled_frame: int = -1
 static var _screen_bounds_cache_frame: int = -1
 static var _screen_bounds_cache: Rect2 = Rect2()
 static var _timer_layer: CanvasLayer = null
 static var _shooter_timer_label: Label = null
 static var _runoff_timer_label: Label = null
-static var _target_preview_label: Label = null
-static var _target_preview_root: Node2D = null
-static var _target_preview_slots: Array = []
-static var _result_layer: CanvasLayer = null
 static var _last_dead_goblin = null
 static var _resolution_choices_pending: bool = false
 static var _resolution_choices_spawned: bool = false
@@ -189,15 +163,12 @@ func _ready() -> void:
 		_click_cooldown_until_msec = 0
 		_panic_ends_at_msec = 0
 		_level_resolved = false
+		_level_was_won = false
 		_last_click_handled_frame = -1
 		_screen_bounds_cache_frame = -1
 		_timer_layer = null
 		_shooter_timer_label = null
 		_runoff_timer_label = null
-		_target_preview_label = null
-		_target_preview_root = null
-		_target_preview_slots.clear()
-		_result_layer = null
 		_last_dead_goblin = null
 		_resolution_choices_pending = false
 		_resolution_choices_spawned = false
@@ -298,49 +269,16 @@ func randomize_body_color() -> void:
 
 
 func _set_target_preview() -> void:
-	_ensure_timer_ui()
-
-	if !is_instance_valid(_target_preview_root):
-		return
-
-	var preview_slot: Dictionary = _create_target_preview_slot(_target_preview_slots.size())
-	_target_preview_slots.append(preview_slot)
-	if is_instance_valid(_target_preview_label) and _target_preview_slots.size() > 1:
-		_target_preview_label.text = "Targets:"
-
-	var source_body: Sprite2D = _get_body_sprite()
-	var preview_body: Sprite2D = preview_slot.get("body") as Sprite2D
-	_copy_preview_layer(source_body, preview_body)
-	if source_body != null and preview_body != null and preview_body.visible:
-		preview_body.scale = _multiply_scale(source_body.scale, scale)
-
-	_copy_preview_layer(_get_clothing_sprite(), preview_slot.get("clothing") as Sprite2D)
-	_copy_preview_layer(_get_face_sprite(), preview_slot.get("face") as Sprite2D)
-	_copy_preview_layer(_get_hat_sprite(), preview_slot.get("hat") as Sprite2D)
-
-
-func _copy_preview_layer(source_sprite: Sprite2D, target_sprite: Sprite2D) -> void:
-	if !is_instance_valid(target_sprite):
-		return
-
-	if source_sprite == null or !source_sprite.visible or source_sprite.texture == null:
-		target_sprite.visible = false
-		return
-
-	target_sprite.visible = true
-	target_sprite.texture = source_sprite.texture
-	target_sprite.position = source_sprite.position
-	target_sprite.rotation = source_sprite.rotation
-	target_sprite.scale = source_sprite.scale
-	target_sprite.centered = source_sprite.centered
-	target_sprite.offset = source_sprite.offset
-	target_sprite.flip_h = false
-	target_sprite.self_modulate = source_sprite.self_modulate
-	target_sprite.modulate = source_sprite.modulate
-
-
-func _multiply_scale(a: Vector2, b: Vector2) -> Vector2:
-	return Vector2(a.x * b.x, a.y * b.y)
+	var level_handler: Node = _get_level_handler()
+	if level_handler != null and level_handler.has_method("add_target_preview"):
+		level_handler.call(
+			"add_target_preview",
+			_get_body_sprite(),
+			_get_clothing_sprite(),
+			_get_face_sprite(),
+			_get_hat_sprite(),
+			scale
+		)
 
 
 func _get_body_sprite() -> Sprite2D:
@@ -416,6 +354,8 @@ func _find_first_descendant_sprite(parent_node: Node) -> Sprite2D:
 func _process(delta: float) -> void:
 	if self == _get_input_dispatcher():
 		_update_level_timers()
+		if _resolution_choices_pending:
+			_try_spawn_resolution_choices_after_scatter()
 
 	var frame_start_position: Vector2 = global_position
 	_state_timer -= delta
@@ -509,8 +449,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		_mark_input_handled()
 		return
 
-	_spawn_click_poof(click_position)
-	_play_random_attack_sound(click_position)
+	_play_click_feedback(click_position)
 
 	var clicked_goblin = _get_goblin_at_global_point(click_position)
 	if clicked_goblin != null and clicked_goblin.is_target:
@@ -649,7 +588,7 @@ func _is_click_cooldown_active() -> bool:
 
 func _apply_miss_penalty(miss_position: Vector2, killed_wrong_goblin: bool) -> void:
 	var now_msec: int = Time.get_ticks_msec()
-	_click_cooldown_until_msec = now_msec + int(maxf(0.0, shot_cooldown_seconds) * 1000.0)
+	_click_cooldown_until_msec = now_msec + int(maxf(0.0, _get_shot_cooldown_seconds()) * 1000.0)
 
 	if _panic_ends_at_msec > 0 and now_msec >= _panic_ends_at_msec:
 		
@@ -657,10 +596,10 @@ func _apply_miss_penalty(miss_position: Vector2, killed_wrong_goblin: bool) -> v
 		return
 
 	if _panic_ends_at_msec <= 0:
-		_panic_ends_at_msec = now_msec + int(maxf(0.1, panic_duration_seconds) * 1000.0)
+		_panic_ends_at_msec = now_msec + int(maxf(0.1, _get_panic_duration_seconds()) * 1000.0)
 
 	if killed_wrong_goblin:
-		_panic_ends_at_msec -= int(maxf(0.0, wrong_kill_runoff_penalty_seconds) * 1000.0)
+		_panic_ends_at_msec -= int(maxf(0.0, _get_wrong_kill_runoff_penalty_seconds()) * 1000.0)
 		if _panic_ends_at_msec <= now_msec:
 			_fail_level()
 			return
@@ -680,11 +619,12 @@ func _win_level() -> void:
 		return
 
 	_level_resolved = true
+	_level_was_won = true
 	_click_cooldown_until_msec = 0
 	_kill_goblin()
-	_ensure_scatter_runoff(global_position, win_runoff_seconds)
+	_ensure_scatter_runoff(global_position, _get_win_runoff_seconds())
 	_update_timer_ui()
-	_show_result_message(win_message)
+	_show_level_result_message(_get_win_message(), true)
 	_queue_resolution_choices_after_scatter()
 
 
@@ -710,9 +650,10 @@ func _fail_level() -> void:
 		return
 
 	_level_resolved = true
+	_level_was_won = false
 	_click_cooldown_until_msec = 0
 	_update_timer_ui()
-	_show_result_message("YOU FAILED")
+	_show_level_result_message(_get_fail_message(), false)
 	_queue_resolution_choices_after_scatter()
 	_send_living_goblins_offscreen()
 
@@ -732,7 +673,7 @@ func _send_living_goblins_offscreen() -> void:
 
 func _ensure_scatter_runoff(scatter_origin: Vector2, scatter_duration: float = -1.0) -> void:
 	var now_msec: int = Time.get_ticks_msec()
-	var effective_scatter_duration: float = panic_duration_seconds if scatter_duration < 0.0 else scatter_duration
+	var effective_scatter_duration: float = _get_panic_duration_seconds() if scatter_duration < 0.0 else scatter_duration
 	if _level_resolved or _panic_ends_at_msec <= now_msec:
 		_panic_ends_at_msec = now_msec + int(maxf(0.1, effective_scatter_duration) * 1000.0)
 
@@ -818,90 +759,79 @@ func _play_random_death_sound() -> void:
 	add_child(audio_player)
 	audio_player.play()
 
-
-func _play_random_attack_sound(click_position: Vector2) -> void:
-	if attack_sound_streams.is_empty():
-		return
-
-	var attack_sound: AudioStream = attack_sound_streams[randi_range(0, attack_sound_streams.size() - 1)]
-	if attack_sound == null:
-		return
-
-	var audio_player: AudioStreamPlayer2D = AudioStreamPlayer2D.new()
-	audio_player.name = "AttackClickSound"
-	audio_player.stream = attack_sound
-	audio_player.volume_db = attack_sound_volume_db
-	audio_player.bus = attack_sound_bus
-	audio_player.finished.connect(audio_player.queue_free)
-
-	var parent_node: Node = _get_click_feedback_parent()
-	if parent_node == null:
-		audio_player.queue_free()
-		return
-
-	parent_node.add_child(audio_player)
-	audio_player.global_position = click_position
-	audio_player.play()
+func _play_click_feedback(click_position: Vector2) -> void:
+	var level_handler: Node = _get_level_handler()
+	if level_handler != null and level_handler.has_method("play_click_feedback"):
+		level_handler.call("play_click_feedback", click_position)
 
 
-func _spawn_click_poof(click_position: Vector2) -> void:
-	if click_poof_texture == null:
-		return
-
-	var parent_node: Node = _get_click_feedback_parent()
-	if parent_node == null:
-		return
-
-	var poof_root: Node2D = Node2D.new()
-	poof_root.name = "ClickPoof"
-	poof_root.z_as_relative = false
-	poof_root.z_index = DEPTH_Z_INDEX_MAX
-	parent_node.add_child(poof_root)
-	poof_root.global_position = click_position
-
-	var lifetime: float = maxf(0.05, click_poof_lifetime)
-	var particle_count: int = maxi(1, click_poof_particle_count)
-	var min_start_scale: float = maxf(0.01, minf(click_poof_start_scale_range.x, click_poof_start_scale_range.y))
-	var max_start_scale: float = maxf(min_start_scale, maxf(click_poof_start_scale_range.x, click_poof_start_scale_range.y))
-	var poof_radius: float = maxf(0.0, click_poof_radius)
-
-	var tween: Tween = poof_root.create_tween()
-	tween.set_parallel(true)
-	for i in range(particle_count):
-		var particle: Sprite2D = Sprite2D.new()
-		particle.name = "PoofParticle%d" % [i + 1]
-		particle.texture = click_poof_texture
-		particle.centered = true
-		particle.modulate = click_poof_color
-		particle.rotation = randf_range(-PI, PI)
-
-		var angle: float = randf() * TAU
-		var direction: Vector2 = Vector2.from_angle(angle)
-		var start_scale: float = randf_range(min_start_scale, max_start_scale)
-		var end_scale: float = start_scale * maxf(0.01, click_poof_end_scale_multiplier)
-		var end_position: Vector2 = direction * randf_range(poof_radius * 0.35, poof_radius)
-
-		particle.scale = Vector2.ONE * start_scale
-		poof_root.add_child(particle)
-
-		var fade_color: Color = click_poof_color
-		fade_color.a = 0.0
-		tween.tween_property(particle, "position", end_position, lifetime).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-		tween.tween_property(particle, "scale", Vector2.ONE * end_scale, lifetime).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-		tween.tween_property(particle, "modulate", fade_color, lifetime).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-
-	tween.finished.connect(poof_root.queue_free)
+func _show_level_result_message(message: String, level_was_won: bool) -> void:
+	var level_handler: Node = _get_level_handler()
+	if level_handler != null and level_handler.has_method("show_result_message"):
+		level_handler.call("show_result_message", message, level_was_won)
 
 
-func _get_click_feedback_parent() -> Node:
+func _get_shot_cooldown_seconds() -> float:
+	return _get_level_float_setting("shot_cooldown_seconds", 5.0)
+
+
+func _get_panic_duration_seconds() -> float:
+	return _get_level_float_setting("panic_duration_seconds", 10.0)
+
+
+func _get_win_runoff_seconds() -> float:
+	return _get_level_float_setting("win_runoff_seconds", 3.0)
+
+
+func _get_wrong_kill_runoff_penalty_seconds() -> float:
+	return _get_level_float_setting("wrong_kill_runoff_penalty_seconds", 2.0)
+
+
+func _get_win_message() -> String:
+	return _get_level_string_setting("win_message", "YOU WIN!")
+
+
+func _get_fail_message() -> String:
+	return _get_level_string_setting("fail_message", "YOU FAILED")
+
+
+func _get_level_float_setting(setting_name: String, fallback: float) -> float:
+	var level_handler: Node = _get_level_handler()
+	if level_handler == null:
+		return fallback
+
+	var value: Variant = level_handler.get(setting_name)
+	if value is float or value is int:
+		return float(value)
+
+	return fallback
+
+
+func _get_level_string_setting(setting_name: String, fallback: String) -> String:
+	var level_handler: Node = _get_level_handler()
+	if level_handler == null:
+		return fallback
+
+	var value: Variant = level_handler.get(setting_name)
+	if value is String:
+		return value
+
+	return fallback
+
+
+func _get_level_handler() -> Node:
+	var node: Node = get_parent()
+	while node != null:
+		if node.has_method("play_click_feedback") or node.has_method("show_result_message"):
+			return node
+		node = node.get_parent()
+
 	var tree: SceneTree = get_tree()
-	var parent_node: Node = tree.current_scene if tree != null else null
-	if parent_node == null:
-		parent_node = get_parent()
-	if parent_node == null:
-		parent_node = tree.root if tree != null else null
+	var current_scene: Node = tree.current_scene if tree != null else null
+	if current_scene != null and (current_scene.has_method("play_click_feedback") or current_scene.has_method("show_result_message")):
+		return current_scene
 
-	return parent_node
+	return null
 
 
 func _queue_resolution_choices_after_scatter() -> void:
@@ -919,8 +849,19 @@ func _try_spawn_resolution_choices_after_scatter() -> void:
 	if !_are_normal_goblins_done_scattering():
 		return
 
+	if !_is_result_dialogue_finished():
+		return
+
 	_resolution_choices_pending = false
 	_spawn_resolution_choices()
+
+
+func _is_result_dialogue_finished() -> bool:
+	var level_handler: Node = _get_level_handler()
+	if level_handler != null and level_handler.has_method("is_result_dialogue_finished"):
+		return bool(level_handler.call("is_result_dialogue_finished"))
+
+	return true
 
 
 func _are_normal_goblins_done_scattering() -> bool:
@@ -1061,10 +1002,19 @@ func _handle_resolution_choice_click(click_position: Vector2) -> void:
 
 	match clicked_goblin._resolution_choice:
 		ResolutionChoice.RESTART:
-			get_tree().reload_current_scene()
+			_handle_positive_resolution_choice()
 
 		ResolutionChoice.QUIT:
 			get_tree().quit()
+
+
+func _handle_positive_resolution_choice() -> void:
+	var level_handler: Node = _get_level_handler()
+	if level_handler != null and level_handler.has_method("handle_positive_resolution_choice"):
+		level_handler.call("handle_positive_resolution_choice", _level_was_won)
+		return
+
+	get_tree().reload_current_scene()
 
 
 func _is_resolution_choice() -> bool:
@@ -1092,31 +1042,6 @@ func _resolution_choice_walk_in_step(delta: float) -> void:
 	var step: float = minf(_speed * delta, dist)
 	global_position = current_pos + dir * step
 	_set_facing_from_direction(dir)
-
-
-func _show_result_message(message: String) -> void:
-	if is_instance_valid(_result_layer):
-		_result_layer.queue_free()
-
-	var canvas_layer: CanvasLayer = CanvasLayer.new()
-	canvas_layer.name = "ResultLayer"
-	canvas_layer.process_mode = Node.PROCESS_MODE_ALWAYS
-	_result_layer = canvas_layer
-
-	var parent_node: Node = get_tree().current_scene
-	if parent_node == null:
-		parent_node = get_tree().root
-	parent_node.add_child(canvas_layer)
-
-	var label: Label = Label.new()
-	label.name = "ResultLabel"
-	label.text = message
-	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	label.set_anchors_preset(Control.PRESET_FULL_RECT)
-	label.add_theme_font_size_override("font_size", 72)
-	canvas_layer.add_child(label)
 
 
 func _update_level_timers() -> void:
@@ -1154,6 +1079,7 @@ func _update_timer_ui() -> void:
 		_runoff_timer_label.text = "Run off: --"
 
 
+
 func _ensure_timer_ui() -> void:
 	if is_instance_valid(_timer_layer):
 		return
@@ -1172,53 +1098,6 @@ func _ensure_timer_ui() -> void:
 	_timer_layer.add_child(_shooter_timer_label)
 	_timer_layer.add_child(_runoff_timer_label)
 
-	_target_preview_label = _create_timer_label("TargetPreviewLabel", Vector2(16.0, 84.0))
-	_target_preview_label.text = "Target:"
-	_timer_layer.add_child(_target_preview_label)
-
-	_target_preview_root = Node2D.new()
-	_target_preview_root.name = "TargetPreview"
-	_target_preview_root.position = Vector2(70.0, 155.0)
-	_timer_layer.add_child(_target_preview_root)
-
-
-func _create_target_preview_slot(slot_index: int) -> Dictionary:
-	var slot_root: Node2D = Node2D.new()
-	slot_root.name = "TargetPreview%d" % [slot_index + 1]
-	slot_root.position = _get_target_preview_slot_position(slot_index)
-	_target_preview_root.add_child(slot_root)
-
-	var body: Sprite2D = Sprite2D.new()
-	body.name = "Body"
-	slot_root.add_child(body)
-
-	var clothing: Sprite2D = Sprite2D.new()
-	clothing.name = "Clothing"
-	body.add_child(clothing)
-
-	var face: Sprite2D = Sprite2D.new()
-	face.name = "Face"
-	body.add_child(face)
-
-	var hat: Sprite2D = Sprite2D.new()
-	hat.name = "Hat"
-	body.add_child(hat)
-
-	return {
-		"root": slot_root,
-		"body": body,
-		"clothing": clothing,
-		"face": face,
-		"hat": hat
-	}
-
-
-func _get_target_preview_slot_position(slot_index: int) -> Vector2:
-	const TARGET_PREVIEW_COLUMNS: int = 4
-	const TARGET_PREVIEW_SPACING: Vector2 = Vector2(54.0, 72.0)
-	var column: int = slot_index % TARGET_PREVIEW_COLUMNS
-	var row: int = floori(float(slot_index) / float(TARGET_PREVIEW_COLUMNS))
-	return Vector2(column * TARGET_PREVIEW_SPACING.x, row * TARGET_PREVIEW_SPACING.y)
 
 
 func _update_walk_squash(delta: float, movement_speed: float) -> void:

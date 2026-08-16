@@ -11,9 +11,13 @@ config_version=5
 [application]
 
 config/name="Whimsy Game"
-run/main_scene="res://level_1.tscn"
+run/main_scene="uid://bsw1tfn4t8m8l"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 config/icon="res://icon.svg"
+
+[audio]
+
+buses/default_bus_layout="uid://csmmps45wqb44"
 
 [display]
 

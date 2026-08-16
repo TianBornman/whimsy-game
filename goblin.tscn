@@ -12,9 +12,7 @@
 [ext_resource type="Texture2D" uid="uid://cloppx80j6j05" path="res://sprites/hats/hat_3.png" id="10_p42ck"]
 [ext_resource type="Texture2D" uid="uid://ccixywmvaktut" path="res://sprites/hats/hat_4.png" id="11_u6rfb"]
 [ext_resource type="Texture2D" uid="uid://dw47sv0y0fuso" path="res://sprites/hats/hat_5.png" id="12_g1t1b"]
-[ext_resource type="AudioStream" uid="uid://dhjfvj7n6b2w4" path="res://sounds/attack_sounds/attack_sound_2.mp3" id="13_hcisk"]
 [ext_resource type="Texture2D" uid="uid://cnixcmcvka0or" path="res://sprites/hats/hat_6.png" id="13_lplgo"]
-[ext_resource type="AudioStream" uid="uid://gwaknkhkk8ed" path="res://sounds/attack_sounds/attack_sound_3.mp3" id="14_vrdj1"]
 [ext_resource type="Texture2D" uid="uid://b5vwjx4an0byg" path="res://sprites/clothing/clothing_1.png" id="14_w2dpk"]
 [ext_resource type="Texture2D" uid="uid://dde65bojrqneb" path="res://sprites/clothing/clothing_2.png" id="15_bxypa"]
 [ext_resource type="Texture2D" uid="uid://c4dudpgsss4d" path="res://sprites/clothing/clothing_3.png" id="16_o0xqm"]
@@ -25,9 +23,7 @@
 [ext_resource type="AudioStream" uid="uid://cjp3nlycs3wlg" path="res://sounds/death_sounds/death_sound_3.mp3" id="21_v2t3l"]
 [ext_resource type="AudioStream" uid="uid://dno75lrf4o0n4" path="res://sounds/death_sounds/death_sound_4.mp3" id="22_k61sd"]
 [ext_resource type="AudioStream" uid="uid://c3t6a8i67ttqt" path="res://sounds/death_sounds/death_sound_5.mp3" id="23_qx47n"]
-[ext_resource type="AudioStream" uid="uid://pe3c8ydtb1nq" path="res://sounds/attack_sounds/attack_sound_1.mp3" id="24_attack"]
 [ext_resource type="Texture2D" uid="uid://cx00ay366wyk" path="res://sprites/goblin_body_shadow.png" id="24_lvoik"]
-[ext_resource type="Texture2D" uid="uid://bmlvc20a4sty0" path="res://sprites/particle_fx_texture.png" id="24_s2f8x"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_goblin_hitbox"]
 size = Vector2(132, 324)
@@ -41,8 +37,6 @@ idle_duration_range = Vector2(0.25, 1.25)
 face_textures = Array[Texture2D]([ExtResource("3_macxp"), ExtResource("4_yrgk8"), ExtResource("5_7ce6m"), ExtResource("6_j80iw")])
 dead_face_texture = ExtResource("7_66nyh")
 death_sound_streams = Array[AudioStream]([ExtResource("19_i4qv8"), ExtResource("20_h4b2r"), ExtResource("21_v2t3l"), ExtResource("22_k61sd"), ExtResource("23_qx47n")])
-attack_sound_streams = Array[AudioStream]([ExtResource("24_attack"), ExtResource("13_hcisk"), ExtResource("14_vrdj1")])
-click_poof_texture = ExtResource("24_s2f8x")
 hat_textures = Array[Texture2D]([ExtResource("8_6nebt"), ExtResource("9_7lq60"), ExtResource("10_p42ck"), ExtResource("11_u6rfb"), ExtResource("12_g1t1b"), ExtResource("13_lplgo")])
 clothing_textures = Array[Texture2D]([ExtResource("14_w2dpk"), ExtResource("15_bxypa"), ExtResource("16_o0xqm"), ExtResource("17_tsv4a"), ExtResource("18_hvf7m")])
 
